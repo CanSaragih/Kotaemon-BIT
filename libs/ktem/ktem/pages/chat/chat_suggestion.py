@@ -8,10 +8,10 @@ class ChatSuggestion(BasePage):
         flowsettings,
         "KH_FEATURE_CHAT_SUGGESTION_SAMPLES",
         [
-            "Summary this document",
-            "Generate a FAQ for this document",
-            "Identify the main highlights in bullet points",
-        ],
+            "Ringkas dokumen ini",
+            "Buat FAQ untuk dokumen ini",
+            "Identifikasi poin-poin utama dalam bentuk bullet",
+        ]
     )
 
     def __init__(self, app):
@@ -21,7 +21,7 @@ class ChatSuggestion(BasePage):
     def on_building_ui(self):
         self.chat_samples = [[each] for each in self.CHAT_SAMPLES]
         with gr.Accordion(
-            label="Chat Suggestion",
+            label="Saran Percakapan",
             visible=getattr(flowsettings, "KH_FEATURE_CHAT_SUGGESTION", False),
         ) as self.accordion:
             self.default_example = gr.State(

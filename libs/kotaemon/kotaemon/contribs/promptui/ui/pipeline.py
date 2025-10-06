@@ -13,28 +13,28 @@ from kotaemon.contribs.promptui.export import export
 
 from ..logs import ResultLog
 
-USAGE_INSTRUCTION = """## How to use:
+USAGE_INSTRUCTION = """## Cara menggunakan:
 
-1. Set the desired parameters.
-2. Set the desired inputs.
-3. Click "Run" to execute the pipeline with the supplied parameters and inputs
-4. The pipeline output will show up in the output panel.
-5. Repeat from step 1.
-6. To compare the result of different run, click "Export" to get an Excel
-    spreadsheet summary of different run.
+1. Atur parameter yang diinginkan.
+2. Atur input yang diinginkan.
+3. Klik "Jalankan" untuk menjalankan pipeline dengan parameter dan input yang disediakan
+4. Output pipeline akan muncul di panel output.
+5. Ulangi dari langkah 1.
+6. Untuk membandingkan hasil dari berbagai run, klik "Ekspor" untuk mendapatkan 
+    spreadsheet Excel rangkuman dari berbagai run.
 
-## Support:
+## Dukungan:
 
-In case of errors, you can:
+Jika terjadi error, Anda dapat:
 
-- PromptUI instruction:
+- Instruksi PromptUI:
     https://github.com/Cinnamon/kotaemon/wiki/Utilities#prompt-engineering-ui
-- Create bug fix and make PR at: https://github.com/Cinnamon/kotaemon
-- Ping any of @john @tadashi @ian @jacky in Slack channel #llm-productization
+- Buat perbaikan bug dan buat PR di: https://github.com/Cinnamon/kotaemon
+- Ping salah satu dari @john @tadashi @ian @jacky di channel Slack #llm-productization
 
-## Contribute:
+## Kontribusi:
 
-- Follow installation at: https://github.com/Cinnamon/kotaemon/
+- Ikuti instalasi di: https://github.com/Cinnamon/kotaemon/
 """
 
 
@@ -82,14 +82,14 @@ def construct_pipeline_ui(
     history_dataframe = gr.DataFrame(wrap=True)
 
     temp = gr.Tab
-    with gr.Blocks(analytics_enabled=False, title="Welcome to PromptUI") as demo:
-        with gr.Accordion(label="HOW TO", open=False):
+    with gr.Blocks(analytics_enabled=False, title="Selamat datang di PromptUI") as demo:
+        with gr.Accordion(label="CARA PENGGUNAAN", open=False):
             gr.Markdown(USAGE_INSTRUCTION)
-        with gr.Accordion(label="Params History", open=False):
+        with gr.Accordion(label="Riwayat Parameter", open=False):
             with gr.Row():
-                save_btn = gr.Button("Save params")
+                save_btn = gr.Button("Simpan parameter")
                 save_btn.click(func_save, inputs=params, outputs=history_dataframe)
-                load_params_btn = gr.Button("Reload params")
+                load_params_btn = gr.Button("Muat ulang parameter")
                 load_params_btn.click(
                     func_load_params, inputs=[], outputs=history_dataframe
                 )
@@ -98,29 +98,29 @@ def construct_pipeline_ui(
                 func_activate_params, inputs=params, outputs=params
             )
         with gr.Row():
-            run_btn = gr.Button("Run")
+            run_btn = gr.Button("Jalankan")
             run_btn.click(func_run, inputs=inputs + params, outputs=outputs)
             export_btn = gr.Button(
-                "Export (Result will be in Exported file next to Output)"
+                "Ekspor (Hasil akan ada di file yang diekspor di samping Output)"
             )
             export_btn.click(func_export, inputs=[], outputs=exported_file)
         with gr.Row():
             with gr.Column():
                 if params:
-                    with temp("Params"):
+                    with temp("Parameter"):
                         for component in params:
                             component.render()
                 if inputs:
-                    with temp("Inputs"):
+                    with temp("Input"):
                         for component in inputs:
                             component.render()
                 if not params and not inputs:
-                    gr.Text("No params or inputs")
+                    gr.Text("Tidak ada parameter atau input")
             with gr.Column():
-                with temp("Outputs"):
+                with temp("Output"):
                     for component in outputs:
                         component.render()
-                with temp("Exported file"):
+                with temp("File yang diekspor"):
                     exported_file.render()
 
     return demo
@@ -197,7 +197,7 @@ def build_pipeline_ui(config: dict, pipeline_def):
         filename = save_dir / f"{int(time.time())}.pkl"
         with open(filename, "wb") as f:
             pickle.dump(params, f)
-        gr.Info("Params saved")
+        gr.Info("Parameter disimpan")
 
         data = load_saved_params(str(save_dir))
         return pd.DataFrame(data)
@@ -233,12 +233,12 @@ def build_pipeline_ui(config: dict, pipeline_def):
             f"{pipeline_def.__module__}.{pipeline_def.__name__}_{datetime.now()}.xlsx"
         )
         path = str(exported_dir / name)
-        gr.Info(f"Begin exporting {name}...")
+        gr.Info(f"Mulai mengekspor {name}...")
         try:
             export(config=config, pipeline_def=pipeline_def, output_path=path)
         except Exception as e:
-            raise gr.Error(f"Failed to export. Please contact project's AIR: {e}")
-        gr.Info(f"Exported {name}. Please go to the `Exported file` tab to download")
+            raise gr.Error(f"Gagal mengekspor. Silakan hubungi AIR proyek: {e}")
+        gr.Info(f"Berhasil mengekspor {name}. Silakan ke tab `File yang diekspor` untuk mengunduh")
         return path
 
     return construct_pipeline_ui(

@@ -29,9 +29,9 @@ def get_header(doc: RetrievedDocument) -> str:
     """Get the header for the document"""
     header = ""
     if "page_label" in doc.metadata:
-        header += f" [Page {doc.metadata['page_label']}]"
+        header += f" [Halaman {doc.metadata['page_label']}]"
 
-    header += f" {doc.metadata.get('file_name', '<evidence>')}"
+    header += f" {doc.metadata.get('file_name', '<bukti>')}"
     return header.strip()
 
 
@@ -88,12 +88,15 @@ class Render:
         page_idx = int(doc.metadata.get("page_label", 1))
 
         if not is_pdf:
-            print("Document is not pdf")
+            print("Dokumen bukan PDF")
             return html_content
 
         if page_idx < 0:
-            print("Fail to extract page number")
+            print("Gagal mengekstrak nomor halaman")
             return html_content
+
+        # set default phrase dulu
+        phrase = "false"
 
         if not highlight_text:
             try:
@@ -113,15 +116,16 @@ class Render:
             except Exception as e:
                 print(e)
                 highlight_text = text
+                # kalau error, phrase tetap ada (default "false")
         else:
             phrase = "true"
 
         return f"""
         {html_content}
         <a href="#" class="pdf-link" data-src="{BASE_PATH}/file={pdf_path}" data-page="{page_idx}" data-search="{highlight_text}" data-phrase="{phrase}">
-            [Preview]
+            [Pratinjau]
         </a>
-        """  # noqa
+        """
 
     @staticmethod
     def highlight(text: str, elem_id: str | None = None) -> str:
@@ -168,7 +172,7 @@ class Render:
         # score from doc_store (Elasticsearch)
         if is_close(doc.score, -1.0):
             vectorstore_score = ""
-            text_search_str = " (full-text search)<br>"
+            text_search_str = " (pencarian teks lengkap)<br>"
         else:
             vectorstore_score = str(round(doc.score, 2))
             text_search_str = "<br>"
@@ -186,7 +190,7 @@ class Render:
         item_type_prefix = doc.metadata.get("type", "")
         item_type_prefix = item_type_prefix.capitalize()
         if item_type_prefix:
-            item_type_prefix += " from "
+            item_type_prefix += " dari "
 
         if "raw" in item_type_prefix:
             item_type_prefix = ""
@@ -199,13 +203,13 @@ class Render:
             relevant_score = 0.0
 
         rendered_score = Render.collapsible(
-            header=f"<b>&emsp;Relevance score</b>: {relevant_score:.1f}",
-            content="<b>&emsp;&emsp;Vectorstore score:</b>"
+            header=f"<b>&emsp;Skor relevansi</b>: {relevant_score:.1f}",
+            content="<b>&emsp;&emsp;Skor vectorstore:</b>"
             f" {vectorstore_score}"
             f"{text_search_str}"
-            "<b>&emsp;&emsp;LLM relevant score:</b>"
+            "<b>&emsp;&emsp;Skor relevansi LLM:</b>"
             f" {llm_reranking_score}<br>"
-            "<b>&emsp;&emsp;Reranking score:</b>"
+            "<b>&emsp;&emsp;Skor perangking ulang:</b>"
             f" {reranking_score}<br>",
         )
 
@@ -222,7 +226,7 @@ class Render:
 
         rendered_header = Render.preview(
             f"<i>{item_type_prefix}{get_header(doc)}</i>"
-            f" [score: {llm_reranking_score}]",
+            f" [skor: {llm_reranking_score}]",
             doc,
             highlight_text=highlight_text,
         )
@@ -235,3 +239,4 @@ class Render:
             content=rendered_score + rendered_doc_content,
             open=open_collapsible,
         )
+        

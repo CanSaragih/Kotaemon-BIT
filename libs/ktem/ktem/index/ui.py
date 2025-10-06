@@ -277,7 +277,7 @@ class IndexManagement(BasePage):
     def select_index(self, index_list, ev: gr.SelectData) -> int:
         """Return the index id"""
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No index is constructed. Please create one first!")
+            gr.Info("Indeks belum dibuat. Silakan buat terlebih dahulu!")
             return -1
 
         if not ev.selected:
@@ -314,16 +314,16 @@ class IndexManagement(BasePage):
         try:
             spec = yaml.load(config, Loader=YAMLNoDateSafeLoader)
             self.manager.update_index(selected_index_id, name, spec)
-            gr.Info(f'Update index "{name}" successfully. Please restart the app!')
+            gr.Info(f'"{name}" berhasil diperbarui. Silakan mulai ulang aplikasi!')
         except Exception as e:
-            raise gr.Error(f'Failed to save index "{name}": {e}')
+            raise gr.Error(f'Gagal memperbarui indeks "{name}": {e}')
 
     def delete_index(self, selected_index_id):
         try:
             self.manager.delete_index(selected_index_id)
-            gr.Info("Delete index successfully. Please restart the app!")
+            gr.Info("Indeks berhasil dihapus. Silakan mulai ulang aplikasi!")
         except Exception as e:
-            gr.Warning(f"Fail to delete index: {e}")
+            gr.Warning(f"Gagal menghapus indeks: {e}")
             return selected_index_id
 
         return -1

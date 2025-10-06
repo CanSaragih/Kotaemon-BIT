@@ -39,7 +39,7 @@ class BaseApp:
 
     def __init__(self):
         self.dev_mode = getattr(settings, "KH_MODE", "") == "dev"
-        self.app_name = getattr(settings, "KH_APP_NAME", "Kotaemon")
+        self.app_name = getattr(settings, "KH_APP_NAME", "SIPADU AI TOOLS - Sistem manajemen data dan metadata terpusat, terstruktur dan terdokumentasi ")
         self.app_version = getattr(settings, "KH_APP_VERSION", "")
         self.f_user_management = getattr(settings, "KH_FEATURE_USER_MANAGEMENT", False)
         self._theme = KotaemonTheme()
@@ -61,7 +61,7 @@ class BaseApp:
         with (dir_assets / "js" / "svg-pan-zoom.min.js").open() as fi:
             self._svg_js = fi.read()
 
-        self._favicon = str(dir_assets / "img" / "favicon.svg")
+        self._favicon = str(dir_assets / "img" / "logo.png")
 
         self.default_settings = SettingGroup(
             application=BaseSettingGroup(settings=settings.SETTINGS_APP),
@@ -183,6 +183,16 @@ class BaseApp:
             };
         </script>
         """
+        
+        # Get SIPADU URL from environment variables
+        import os
+        sipadu_api_base = os.getenv('SIPADU_API_BASE', 'http://localhost.sipadubapelitbangbogor')
+        sipadu_home_url = f"{sipadu_api_base}/home"
+        
+        print(f"🏠 SIPADU API Base: {sipadu_api_base}")
+        print(f"🏠 SIPADU Home URL: {sipadu_home_url}")
+        
+        # Enhanced external scripts with SIPADU integration - ENVIRONMENT BASED
         external_js = (
             "<script type='module' "
             "src='https://cdn.skypack.dev/pdfjs-viewer-element'>"
@@ -194,6 +204,20 @@ class BaseApp:
             "<script src='https://cdn.jsdelivr.net/npm/minisearch@7.1.1/dist/umd/index.min.js'></script>"  # noqa
             "</script>"
             "<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/tributejs/5.1.3/tribute.css'/>"  # noqa
+            # Hide Gradio loading immediately
+            "<style>"
+            ".loading, .gradio-loading, body > .loading { display: none !important; }"
+            "body { visibility: hidden; }" # Hide body until preloader is ready
+            "</style>"
+            # Add SIPADU configuration to global scope - FROM ENVIRONMENT
+            "<script>"
+            f"window.SIPADU_CONFIG = {{ "
+            f"API_BASE: '{sipadu_api_base}', "
+            f"HOME_URL: '{sipadu_home_url}', "
+            f"LOGO_PATH: '{self._favicon}' "
+            f"}};"
+            "console.log('🏠 SIPADU Config loaded from environment:', window.SIPADU_CONFIG);"
+            "</script>"
         )
 
         with gr.Blocks(
@@ -215,6 +239,37 @@ class BaseApp:
             self.register_events()
             self.on_app_created()
 
+            # Optimized initialization with SIPADU branding
+            demo.load(
+                fn=lambda: None,
+                js="""
+                function() { 
+                    // Remove dark mode and ensure light mode
+                    document.body.classList.remove('dark');
+                    
+                    // Show body after preloader is set up
+                    document.body.style.visibility = 'visible';
+                    
+                    // Hide any Gradio loading elements
+                    const loadings = document.querySelectorAll('.loading, .gradio-loading');
+                    loadings.forEach(el => el.style.display = 'none');
+                    
+                    // Add SIPADU branding elements
+                    setTimeout(() => {
+                        if (window.run && typeof window.run === 'function') {
+                            console.log('🏢 Initializing SIPADU branding...');
+                        }
+                    }, 500);
+                    
+                    // Ensure smooth initialization
+                    setTimeout(() => {
+                        document.body.style.overflow = 'auto';
+                    }, 2000);
+                }
+                """,
+                inputs=[],
+                outputs=[]
+            )
             demo.load(None, None, None, js=self._pdf_view_js)
 
         return demo
@@ -270,6 +325,58 @@ class BasePage:
     def _on_app_created(self):
         """Called when the app is created"""
 
+    def as_gradio_component(
+        self,
+    ) -> Optional[gr.components.Component | list[gr.components.Component]]:
+        """Return the gradio components responsible for events
+
+        Note: in ideal scenario, this method shouldn't be necessary.
+        """
+        return None
+
+    def render(self):
+        for value in self.__dict__.values():
+            if isinstance(value, gr.blocks.Block):
+                value.render()
+            if isinstance(value, BasePage):
+                value.render()
+
+    def unrender(self):
+        for value in self.__dict__.values():
+            if isinstance(value, gr.blocks.Block):
+                value.unrender()
+            if isinstance(value, BasePage):
+                value.unrender()
+
+    def declare_public_events(self):
+        """Declare an event for the app"""
+        for event in self.public_events:
+            self._app.declare_event(event)
+
+        for value in self.__dict__.values():
+            if isinstance(value, BasePage):
+                value.declare_public_events()
+
+    def subscribe_public_events(self):
+        """Subscribe to an event"""
+        self.on_subscribe_public_events()
+        for value in self.__dict__.values():
+            if isinstance(value, BasePage):
+                value.subscribe_public_events()
+
+    def register_events(self):
+        """Register all events"""
+        self.on_register_events()
+        for value in self.__dict__.values():
+            if isinstance(value, BasePage):
+                value.register_events()
+
+    def on_app_created(self):
+        """Execute on app created callbacks"""
+        self._on_app_created()
+        for value in self.__dict__.values():
+            if isinstance(value, BasePage):
+                value.on_app_created()
     def as_gradio_component(
         self,
     ) -> Optional[gr.components.Component | list[gr.components.Component]]:

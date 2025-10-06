@@ -1,5 +1,6 @@
 SUPPORTED_LANGUAGE_MAP = {
-    "en": "English",
+    "id": "Bahasa Indonesia",
+    "en": "English", 
     "ja": "Japanese",
     "vi": "Vietnamese",
     "es": "Spanish",
@@ -28,6 +29,5 @@ SUPPORTED_LANGUAGE_MAP = {
     "no": "Norwegian",
     "he": "Hebrew",
     "th": "Thai",
-    "id": "Indonesian",
     "ms": "Malay",
 }

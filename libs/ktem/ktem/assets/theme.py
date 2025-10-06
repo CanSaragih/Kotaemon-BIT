@@ -184,8 +184,19 @@ class Kotaemon(Soft):
             font_mono=font_mono,
         )
         self.name = "kotaemon"
+        # Force light mode as default
+        self._stylesheets = []
         super().set(
             **common,
-            **dark_mode,
             **light_mode,
+            **dark_mode,
         )
+
+
+class KotaemonTheme(Kotaemon):
+    """Alias for Kotaemon theme with explicit light mode default"""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Ensure light mode is the starting mode
+        self.name = "kotaemon-light"

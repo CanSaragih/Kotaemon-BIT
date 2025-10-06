@@ -2,6 +2,18 @@
   --main-area-height: calc(100vh - 110px);
 }
 
+/* Force light mode as default */
+body:not(.dark) {
+  background-color: var(--background-fill-primary) !important;
+  color: var(--body-text-color) !important;
+}
+
+/* Ensure dark mode styles only apply when dark class is present */
+body.dark {
+  background-color: var(--background-fill-primary-dark) !important;
+  color: var(--body-text-color-dark) !important;
+}
+
 /* no footer */
 footer {
   display: none !important;
@@ -52,7 +64,7 @@ button.selected {
   font-weight: bold;
 }
 
-.message-row.bubble.bot-row{
+.message-row.bubble.bot-row {
   overflow-x: auto;
 }
 
@@ -100,7 +112,7 @@ button.selected {
   transition: all 0.4s;
 }
 
-body.dark #chat-info-panel figure>img{
+body.dark #chat-info-panel figure > img {
   filter: invert(100%);
 }
 
@@ -295,7 +307,7 @@ pdfjs-viewer-element {
 }
 
 .modal-header {
-  padding: 0px 10px
+  padding: 0px 10px;
 }
 
 .modal-content {
@@ -357,14 +369,14 @@ pdfjs-viewer-element {
   height: 1em;
   width: 1em;
   border-radius: 1em;
-  background: #FFF;
+  background: #fff;
   box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.3);
   -webkit-transition: all 300ms;
   -moz-transition: all 300ms;
   transition: all 300ms;
 }
 
-.switch input:checked+div {
+.switch input:checked + div {
   -webkit-transform: translate3d(100%, 0, 0);
   -moz-transform: translate3d(100%, 0, 0);
   transform: translate3d(100%, 0, 0);
@@ -378,7 +390,7 @@ pdfjs-viewer-element {
 /* Bot animation */
 
 .message.bot {
-  animation: fadein 1.0s ease-in-out forwards;
+  animation: fadein 1s ease-in-out forwards;
 }
 
 details.evidence {
@@ -455,4 +467,803 @@ div.markmap {
 #login-row {
   display: grid;
   place-items: center;
+}
+
+/* Hide Gradio default loading/preloader */
+.gradio-container .loading,
+.gradio-container .gradio-loading,
+body > .loading,
+body > .gradio-loading {
+  display: none !important;
+}
+
+/* Custom loading screen for SIPADU - CLEAN WHITE VERSION */
+.modern-preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+.modern-preloader.fade-out {
+  opacity: 0;
+}
+
+.preloader-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  animation: slideInUp 0.8s ease-out;
+  max-width: 500px;
+  padding: 40px;
+}
+
+.preloader-logo {
+  width: 180px;
+  height: 180px;
+  background-image: url("/file=libs/ktem/ktem/assets/img/logo.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-bottom: 30px;
+  animation: logoFloat 2s ease-in-out infinite;
+  filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.1));
+}
+
+.preloader-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.preloader-subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: #64748b;
+  margin-bottom: 40px;
+  opacity: 0.8;
+  max-width: 400px;
+  line-height: 1.4;
+}
+
+.preloader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #1e3a8a;
+  border-radius: 50%;
+  animation: modernSpin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.preloader-progress {
+  width: 280px;
+  height: 3px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 15px;
+}
+
+.preloader-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+  border-radius: 2px;
+  animation: progressLoad 2.5s ease-in-out;
+  transform-origin: left;
+}
+
+.preloader-status {
+  font-size: 14px;
+  color: #64748b;
+  opacity: 0.7;
+  animation: pulse 1.5s ease-in-out infinite;
+  font-weight: 500;
+}
+
+.preloader-dots::after {
+  content: "";
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+/* Animations - Updated for better performance */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes logoFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes modernSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes progressLoad {
+  0% {
+    transform: scaleX(0);
+  }
+  25% {
+    transform: scaleX(0.2);
+  }
+  50% {
+    transform: scaleX(0.5);
+  }
+  75% {
+    transform: scaleX(0.8);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes dots {
+  0%,
+  20% {
+    content: "";
+  }
+  40% {
+    content: ".";
+  }
+  60% {
+    content: "..";
+  }
+  80%,
+  100% {
+    content: "...";
+  }
+}
+
+/* Remove old preloader styles and hide Gradio defaults */
+.gradio-container::before,
+.gradio-container::after,
+.gradio-container .loading-logo,
+.loading-spinner {
+  display: none !important;
+}
+
+/* Hide Gradio's built-in loading animations */
+.loading {
+  display: none !important;
+}
+
+/* Modern Login Page Styling - PERFECT CENTER VERSION */
+#login-tab {
+  background: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.login-container {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 48px 40px 56px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  animation: slideInUp 0.6s ease-out;
+  margin: auto;
+  position: relative;
+}
+
+.login-logo {
+  width: 120px;
+  height: 120px;
+  background-image: url("/file=libs/ktem/ktem/assets/img/logo.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin: 0 auto 24px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  animation: logoFloat 3s ease-in-out infinite;
+}
+
+.login-title {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  color: #1a202c !important;
+  margin-bottom: 8px !important;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.login-tagline {
+  font-size: 18px !important;
+  color: #64748b !important;
+  margin-bottom: 32px !important;
+  line-height: 1.4;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.login-subtitle {
+  font-size: 16px !important;
+  color: #64748b !important;
+  margin-bottom: 32px !important;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.login-status {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 24px 0;
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.login-status.success {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.login-status.error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.login-button {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  border: none !important;
+  border-radius: 16px !important;
+  padding: 20px 40px !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: white !important;
+  width: 100% !important;
+  margin: 32px 0 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.35) !important;
+  display: block !important;
+  position: relative !important;
+  overflow: hidden !important;
+  letter-spacing: 0.025em;
+}
+
+.login-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s;
+}
+
+.login-button:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 35px rgba(37, 99, 235, 0.45) !important;
+}
+
+.login-button:hover::before {
+  left: 100%;
+}
+
+.login-button:active {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4) !important;
+}
+
+.login-secondary-button {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  padding: 14px 28px !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  margin: 8px !important;
+  min-width: 140px !important;
+}
+
+.login-secondary-button:hover {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  transform: translateY(-1px) !important;
+}
+
+.login-form-group {
+  margin: 20px 0;
+  text-align: left;
+}
+
+.login-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.login-form-group input {
+  width: 100% !important;
+  padding: 14px 18px !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+  transition: all 0.2s ease !important;
+  background: #ffffff !important;
+}
+
+.login-form-group input:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+  outline: none !important;
+}
+
+.login-error-container {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 28px 0;
+  text-align: left;
+}
+
+.login-error-title {
+  color: #dc2626 !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  margin-bottom: 16px !important;
+  text-align: center;
+}
+
+.login-error-message {
+  color: #7f1d1d !important;
+  font-size: 15px !important;
+  line-height: 1.6;
+}
+
+.login-welcome-container {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 28px 0;
+  text-align: left;
+}
+
+.login-welcome-title {
+  color: #166534 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  margin-bottom: 16px !important;
+  text-align: center;
+}
+
+.login-welcome-message {
+  color: #166534 !important;
+  font-size: 15px !important;
+  line-height: 1.6;
+}
+
+.login-info-box {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 28px 0;
+  text-align: left;
+}
+
+.login-info-title {
+  color: #1e40af !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  margin-bottom: 18px !important;
+  text-align: center;
+}
+
+.login-info-content {
+  color: #1e40af !important;
+  font-size: 15px !important;
+  line-height: 1.6;
+}
+
+.login-button-group {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+/* Development mode specific styling */
+.dev-login-container {
+  background: linear-gradient(135deg, #fefce8 0%, #fef3c7 100%);
+  border: 1px solid #fde047;
+  border-radius: 16px;
+  padding: 28px;
+  margin: 28px 0;
+}
+
+.dev-login-title {
+  color: #a16207 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  margin-bottom: 16px !important;
+  text-align: center;
+}
+
+.dev-login-note {
+  color: #a16207 !important;
+  font-size: 15px !important;
+  margin-bottom: 24px !important;
+  text-align: center;
+}
+
+/* Enhanced animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes logoFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* SIPADU Logo and Navigation - CLICKABLE VERSION */
+.sipadu-logo {
+  width: 40px;
+  height: 40px;
+  background-image: url("/file=libs/ktem/ktem/assets/img/logo.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+  margin-left: 15px;
+  margin-right: 10px;
+  vertical-align: middle;
+  border-radius: 8px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+  cursor: pointer !important;
+  position: relative;
+}
+
+.sipadu-logo:hover {
+  transform: scale(1.1);
+}
+
+.sipadu-logo:active {
+  transform: scale(1.05);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+}
+
+/* SIPADU Modern Confirmation Modal */
+.sipadu-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sipadu-confirm-overlay.sipadu-confirm-show {
+  opacity: 1;
+}
+
+.sipadu-confirm-modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sipadu-confirm-overlay.sipadu-confirm-show .sipadu-confirm-modal {
+  transform: translateY(0) scale(1);
+}
+
+.sipadu-confirm-header {
+  text-align: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.sipadu-confirm-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.sipadu-confirm-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.sipadu-confirm-body {
+  padding: 20px 24px;
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.sipadu-confirm-body p {
+  margin: 0 0 8px;
+}
+
+.sipadu-confirm-body p:last-child {
+  margin-bottom: 0;
+}
+
+.sipadu-confirm-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 24px;
+}
+
+.sipadu-btn-cancel,
+.sipadu-btn-confirm {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.sipadu-btn-cancel {
+  background: #f7fafc;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+}
+
+.sipadu-btn-cancel:hover {
+  background: #edf2f7;
+  transform: translateY(-1px);
+}
+
+.sipadu-btn-confirm {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: white;
+}
+
+.sipadu-btn-confirm:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+}
+
+/* SIPADU Modern Notifications */
+.sipadu-notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10001;
+  pointer-events: none;
+}
+
+.sipadu-notification {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid transparent;
+  max-width: 350px;
+  opacity: 0;
+  transform: translateX(100%) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: auto;
+}
+
+.sipadu-notification.sipadu-notification-show {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.sipadu-notification-info {
+  border-left-color: #3b82f6;
+}
+
+.sipadu-notification-success {
+  border-left-color: #10b981;
+}
+
+.sipadu-notification-warning {
+  border-left-color: #f59e0b;
+}
+
+.sipadu-notification-error {
+  border-left-color: #ef4444;
+}
+
+.sipadu-notification-icon {
+  font-size: 18px;
+  margin-right: 12px;
+}
+
+.sipadu-notification-message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a202c;
+}
+
+/* Dark mode support for notifications */
+body.dark .sipadu-confirm-modal {
+  background: #2d3748;
+  color: white;
+}
+
+body.dark .sipadu-confirm-header {
+  border-bottom-color: #4a5568;
+}
+
+body.dark .sipadu-confirm-header h3 {
+  color: white;
+}
+
+body.dark .sipadu-confirm-body {
+  color: #cbd5e0;
+}
+
+body.dark .sipadu-btn-cancel {
+  background: #4a5568;
+  color: #cbd5e0;
+  border-color: #718096;
+}
+
+body.dark .sipadu-btn-cancel:hover {
+  background: #718096;
+}
+
+body.dark .sipadu-notification {
+  background: #2d3748;
+  color: white;
+}
+
+body.dark .sipadu-notification-message {
+  color: #cbd5e0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sipadu-confirm-modal {
+    margin: 20px;
+    max-width: none;
+  }
+
+  .sipadu-notification-container {
+    left: 20px;
+    right: 20px;
+  }
+
+  .sipadu-notification {
+    max-width: none;
+  }
+}
+
+/* Logo hover enhancement with notification hint */
+.sipadu-logo:hover::after {
+  opacity: 1;
+}
+
+.sipadu-logo::after {
+  content: "Klik untuk kembali ke Dashboard SIPADU";
+  position: absolute;
+  bottom: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 1000;
+}
+
+.gradio-tabs .tab-nav button[aria-label*="Pengaturan"],
+.gradio-tabs .tab-nav button[aria-label*="Bantuan"] {
+  display: none !important;
+}
+
+.sipadu-back-button {
+  right: 60px;
+  padding: 5px 10px !important;
+  font-size: 11px !important;
+}
+
+.sipadu-back-button::before {
+  font-size: 14px;
+}
+
+#toggle-dark-button {
+  right: 180px;
 }

@@ -35,7 +35,7 @@ def build_from_dict(config: Union[str, dict]):
         demo = gr.TabbedInterface(
             demos,
             tab_names=list(config_dict.keys()),
-            title="PromptUI from kotaemon",
+            title="PromptUI dari kotaemon",
             analytics_enabled=False,
             theme=John(),
         )

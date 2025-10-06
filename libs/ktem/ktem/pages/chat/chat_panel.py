@@ -6,15 +6,15 @@ KH_DEMO_MODE = getattr(flowsettings, "KH_DEMO_MODE", False)
 
 if not KH_DEMO_MODE:
     PLACEHOLDER_TEXT = (
-        "This is the beginning of a new conversation.\n"
-        "Start by uploading a file or a web URL. "
-        "Visit Files tab for more options (e.g: GraphRAG)."
+        "Ini adalah awal dari percakapan baru.\n"
+        "Mulailah dengan mengunggah dokumen atau URL web. "
+        "Kunjungi tab Dokumen untuk opsi lainnya (misalnya: GraphRAG)."
     )
 else:
     PLACEHOLDER_TEXT = (
-        "Welcome to Kotaemon Demo. "
-        "Start by browsing preloaded conversations to get onboard.\n"
-        "Check out Hint section for more tips."
+        "Selamat datang di Demo Kotaemon."
+        "Mulailah dengan menelusuri percakapan yang sudah tersedia untuk orientasi.\n"
+        "Lihat bagian Petunjuk untuk tips lebih lanjut."
     )
 
 
@@ -39,7 +39,7 @@ class ChatPanel(BasePage):
                 scale=20,
                 file_count="multiple",
                 placeholder=(
-                    "Type a message, search the @web, or tag a file with @filename"
+                    "Ketik pesan, cari @web, atau tag file dengan @namafile"
                 ),
                 container=False,
                 show_label=False,

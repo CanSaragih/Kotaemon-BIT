@@ -38,45 +38,45 @@ CONTEXT_RELEVANT_WARNING_SCORE = config(
 )
 
 DEFAULT_QA_TEXT_PROMPT = (
-    "Use the following pieces of context to answer the question at the end in detail with clear explanation. "  # noqa: E501
-    "If you don't know the answer, just say that you don't know, don't try to "
-    "make up an answer. Give answer in "
+    "Gunakan potongan konteks berikut untuk menjawab pertanyaan di akhir secara detail dengan penjelasan yang jelas. "  # noqa: E501
+    "Jika Anda tidak tahu jawabannya, katakan saja bahwa Anda tidak tahu, jangan coba "
+    "membuat jawaban. Berikan jawaban dalam "
     "{lang}.\n\n"
     "{context}\n"
-    "Question: {question}\n"
-    "Helpful Answer:"
+    "Pertanyaan: {question}\n"
+    "Jawaban yang Membantu:"
 )
 
 DEFAULT_QA_TABLE_PROMPT = (
-    "Use the given context: texts, tables, and figures below to answer the question, "
-    "then provide answer with clear explanation."
-    "If you don't know the answer, just say that you don't know, "
-    "don't try to make up an answer. Give answer in {lang}.\n\n"
-    "Context:\n"
+    "Gunakan konteks yang diberikan: teks, tabel, dan gambar di bawah ini untuk menjawab pertanyaan, "
+    "kemudian berikan jawaban dengan penjelasan yang jelas."
+    "Jika Anda tidak tahu jawabannya, katakan saja bahwa Anda tidak tahu, "
+    "jangan coba membuat jawaban. Berikan jawaban dalam {lang}.\n\n"
+    "Konteks:\n"
     "{context}\n"
-    "Question: {question}\n"
-    "Helpful Answer:"
+    "Pertanyaan: {question}\n"
+    "Jawaban yang Membantu:"
 )  # noqa
 
 DEFAULT_QA_CHATBOT_PROMPT = (
-    "Pick the most suitable chatbot scenarios to answer the question at the end, "
-    "output the provided answer text. If you don't know the answer, "
-    "just say that you don't know. Keep the answer as concise as possible. "
-    "Give answer in {lang}.\n\n"
-    "Context:\n"
+    "Pilih skenario chatbot yang paling sesuai untuk menjawab pertanyaan di akhir, "
+    "keluarkan teks jawaban yang disediakan. Jika Anda tidak tahu jawabannya, "
+    "katakan saja bahwa Anda tidak tahu. Buat jawaban sesingkat mungkin. "
+    "Berikan jawaban dalam {lang}.\n\n"
+    "Konteks:\n"
     "{context}\n"
-    "Question: {question}\n"
-    "Answer:"
+    "Pertanyaan: {question}\n"
+    "Jawaban:"
 )  # noqa
 
 DEFAULT_QA_FIGURE_PROMPT = (
-    "Use the given context: texts, tables, and figures below to answer the question. "
-    "If you don't know the answer, just say that you don't know. "
-    "Give answer in {lang}.\n\n"
-    "Context: \n"
+    "Gunakan konteks yang diberikan: teks, tabel, dan gambar di bawah ini untuk menjawab pertanyaan. "
+    "Jika Anda tidak tahu jawabannya, katakan saja bahwa Anda tidak tahu. "
+    "Berikan jawaban dalam {lang}.\n\n"
+    "Konteks: \n"
     "{context}\n"
-    "Question: {question}\n"
-    "Answer: "
+    "Pertanyaan: {question}\n"
+    "Jawaban: "
 )  # noqa
 
 

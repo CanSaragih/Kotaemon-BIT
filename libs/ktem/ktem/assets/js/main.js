@@ -1,10 +1,359 @@
 function run() {
+  // Create modern preloader IMMEDIATELY - no delay
+  const modernPreloader = document.createElement("div");
+  modernPreloader.className = "modern-preloader";
+  modernPreloader.id = "modern-preloader";
+
+  modernPreloader.innerHTML = `
+    <div class="preloader-container">
+      <div class="preloader-logo"></div>
+      <div class="preloader-title">SIPADU AI TOOLS</div>
+      <div class="preloader-subtitle">Sistem manajemen data dan metadata terpusat, terstruktur dan terdokumentasi</div>
+      <div class="preloader-spinner"></div>
+      <div class="preloader-progress">
+        <div class="preloader-progress-bar"></div>
+      </div>
+      <div class="preloader-status">
+        Memuat sistem<span class="preloader-dots"></span>
+      </div>
+    </div>
+  `;
+
+  // Insert immediately at the beginning of body
+  document.body.insertBefore(modernPreloader, document.body.firstChild);
+
+  // Hide any Gradio default loading immediately
+  const hideGradioLoading = () => {
+    const gradioLoadings = document.querySelectorAll(
+      ".loading, .gradio-loading"
+    );
+    gradioLoadings.forEach((el) => (el.style.display = "none"));
+  };
+  hideGradioLoading();
+
+  // Enhanced status updates
+  const statusTexts = [
+    "Memuat sistem",
+    "Menginisialisasi komponen",
+    "Mempersiapkan antarmuka",
+    "Menghubungkan ke server",
+    "Memuat konfigurasi",
+    "Hampir selesai",
+  ];
+
+  let currentStatus = 0;
+  const statusElement = modernPreloader.querySelector(".preloader-status");
+
+  const statusInterval = setInterval(() => {
+    if (currentStatus < statusTexts.length - 1) {
+      currentStatus++;
+      statusElement.innerHTML =
+        statusTexts[currentStatus] + '<span class="preloader-dots"></span>';
+    }
+  }, 400); // Faster status updates
+
+  // Enhanced hide preloader function
+  function hidePreloader() {
+    clearInterval(statusInterval);
+
+    // Update final status
+    statusElement.innerHTML = "Siap digunakan!";
+
+    setTimeout(() => {
+      modernPreloader.classList.add("fade-out");
+
+      setTimeout(() => {
+        if (modernPreloader && modernPreloader.parentNode) {
+          modernPreloader.remove();
+        }
+
+        // Ensure gradio container is visible and ready
+        const gradioContainer = document.querySelector(".gradio-container");
+        if (gradioContainer) {
+          gradioContainer.classList.add("loaded");
+          gradioContainer.style.opacity = "1";
+          gradioContainer.style.visibility = "visible";
+        }
+      }, 500);
+    }, 200);
+  }
+
+  // Optimized timing for better UX
+  const minDisplayTime = 1800; // Slightly reduced minimum time
+  const startTime = Date.now();
+
+  function checkAndHide() {
+    const elapsedTime = Date.now() - startTime;
+    const gradioContainer = document.querySelector(".gradio-container");
+
+    if (gradioContainer && elapsedTime >= minDisplayTime) {
+      // Additional check: ensure Gradio is actually ready
+      const tabsLoaded = document.querySelector("#chat-tab");
+      if (tabsLoaded) {
+        hidePreloader();
+        return;
+      }
+    }
+
+    // Continue checking every 100ms
+    setTimeout(checkAndHide, 100);
+  }
+
+  // Start checking immediately
+  setTimeout(checkAndHide, minDisplayTime);
+
+  // Continuously hide any Gradio loading that might appear
+  const loadingWatcher = setInterval(() => {
+    hideGradioLoading();
+    // Stop watching after preloader is hidden
+    if (!document.getElementById("modern-preloader")) {
+      clearInterval(loadingWatcher);
+    }
+  }, 100);
+
   let main_parent = document.getElementById("chat-tab").parentNode;
 
   main_parent.childNodes[0].classList.add("header-bar");
   main_parent.style = "padding: 0; margin: 0";
   main_parent.parentNode.style = "gap: 0";
   main_parent.parentNode.parentNode.style = "padding: 0";
+
+  // Add SIPADU clickable logo next to Chat tab
+  function addSipaduLogo() {
+    const tabNavContainer = document.querySelector(".tab-nav");
+    if (tabNavContainer && !document.querySelector(".sipadu-logo")) {
+      const logo = document.createElement("div");
+      logo.className = "sipadu-logo";
+      logo.title = "Kembali ke Dashboard SIPADU";
+
+      // Add click handler for logo with modern notification
+      logo.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Create modern confirmation modal instead of browser alert
+        showSipaduConfirmation();
+      });
+
+      // Insert logo after the first tab button (Chat)
+      const firstTabButton = tabNavContainer.querySelector("button");
+      if (firstTabButton) {
+        firstTabButton.parentNode.insertBefore(
+          logo,
+          firstTabButton.nextSibling
+        );
+        console.log("✅ SIPADU clickable logo added to header");
+      }
+    }
+  }
+
+  // Modern confirmation function using Gradio's notification system
+  function showSipaduConfirmation() {
+    // Create modern modal overlay
+    const overlay = document.createElement("div");
+    overlay.className = "sipadu-confirm-overlay";
+
+    const modal = document.createElement("div");
+    modal.className = "sipadu-confirm-modal";
+
+    modal.innerHTML = `
+      <div class="sipadu-confirm-header">
+        <div class="sipadu-confirm-icon">🏠</div>
+        <h3>Kembali ke Dashboard SIPADU</h3>
+      </div>
+      <div class="sipadu-confirm-body">
+        <p>Anda akan keluar dari AI Tools dan menuju ke Dashboard SIPADU.</p>
+        <p>Silakan tekan Lanjutkan untuk melanjutkan.</p>
+      </div>
+      <div class="sipadu-confirm-actions">
+        <button class="sipadu-btn-cancel">Batal</button>
+        <button class="sipadu-btn-confirm">Lanjutkan</button>
+      </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Add animation
+    setTimeout(() => {
+      overlay.classList.add("sipadu-confirm-show");
+    }, 10);
+
+    // Handle buttons
+    const cancelBtn = modal.querySelector(".sipadu-btn-cancel");
+    const confirmBtn = modal.querySelector(".sipadu-btn-confirm");
+
+    cancelBtn.addEventListener("click", () => {
+      closeSipaduConfirmation(overlay);
+    });
+
+    confirmBtn.addEventListener("click", () => {
+      closeSipaduConfirmation(overlay);
+      // Show loading notification
+      showSipaduNotification("Mengarahkan ke Dashboard SIPADU...", "info");
+
+      // Get SIPADU URL from environment-based config with multiple fallbacks
+      let sipaduUrl = "http://localhost.sipadubapelitbangbogor/home"; // Default fallback
+
+      // Priority 1: Window SIPADU_CONFIG from server environment
+      if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.HOME_URL) {
+        sipaduUrl = window.SIPADU_CONFIG.HOME_URL;
+        console.log("🏠 Using SIPADU URL from server config:", sipaduUrl);
+      }
+      // Priority 2: Window SIPADU_CONFIG API_BASE (construct home URL)
+      else if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.API_BASE) {
+        sipaduUrl = window.SIPADU_CONFIG.API_BASE + "/home";
+        console.log("🏠 Using SIPADU URL from API_BASE:", sipaduUrl);
+      }
+      // Priority 3: Try to get from localStorage (if previously stored)
+      else if (localStorage.getItem("sipadu_base_url")) {
+        sipaduUrl = localStorage.getItem("sipadu_base_url") + "/home";
+        console.log("🏠 Using SIPADU URL from localStorage:", sipaduUrl);
+      } else {
+        console.log("🏠 Using default SIPADU URL:", sipaduUrl);
+      }
+
+      console.log("🏠 Final redirect URL:", sipaduUrl);
+
+      // Redirect after short delay
+      setTimeout(() => {
+        try {
+          // Store the base URL for future use
+          if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.API_BASE) {
+            localStorage.setItem(
+              "sipadu_base_url",
+              window.SIPADU_CONFIG.API_BASE
+            );
+          }
+
+          console.log("🚀 Redirecting to:", sipaduUrl);
+          window.location.href = sipaduUrl;
+        } catch (error) {
+          console.error("❌ Redirect failed:", error);
+          showSipaduNotification(
+            "Gagal mengarahkan ke SIPADU. Silakan buka manual.",
+            "error"
+          );
+          // Fallback: open in new tab
+          window.open(sipaduUrl, "_blank");
+        }
+      }, 800);
+    });
+
+    // Close on overlay click
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) {
+        closeSipaduConfirmation(overlay);
+      }
+    });
+
+    // Close on ESC key
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        closeSipaduConfirmation(overlay);
+        document.removeEventListener("keydown", handleEscape);
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+  }
+
+  function closeSipaduConfirmation(overlay) {
+    overlay.classList.remove("sipadu-confirm-show");
+    setTimeout(() => {
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+    }, 300);
+  }
+
+  // Modern notification system (integrates with Gradio's notification)
+  function showSipaduNotification(message, type = "info") {
+    // Try to use Gradio's notification system if available
+    if (window.gradio && window.gradio.client) {
+      // Use Gradio's built-in notification
+      console.log(`🔔 ${type.toUpperCase()}: ${message}`);
+      return;
+    }
+
+    // Fallback: Create custom notification
+    const notification = document.createElement("div");
+    notification.className = `sipadu-notification sipadu-notification-${type}`;
+    notification.innerHTML = `
+      <div class="sipadu-notification-icon">
+        ${
+          type === "info"
+            ? "ℹ️"
+            : type === "success"
+            ? "✅"
+            : type === "warning"
+            ? "⚠️"
+            : "❌"
+        }
+      </div>
+      <div class="sipadu-notification-message">${message}</div>
+    `;
+
+    // Add to container or create one
+    let container = document.querySelector(".sipadu-notification-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.className = "sipadu-notification-container";
+      document.body.appendChild(container);
+    }
+
+    container.appendChild(notification);
+
+    // Show animation
+    setTimeout(
+      () => notification.classList.add("sipadu-notification-show"),
+      10
+    );
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      notification.classList.remove("sipadu-notification-show");
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
+  }
+
+  // Hide specific tabs from main navigation
+  function hideSpecificTabs() {
+    // Get all tab navigation buttons
+    const tabNavButtons = document.querySelectorAll(".tab-nav button");
+
+    // List of tab names to hide (Indonesian)
+    const tabsToHide = ["Sumber Daya", "Pengaturan", "Bantuan"];
+
+    tabNavButtons.forEach((button) => {
+      const buttonText = button.textContent.trim();
+
+      // Hide tabs that match our criteria
+      if (tabsToHide.includes(buttonText)) {
+        button.style.display = "none";
+        console.log(`Hidden tab: ${buttonText}`);
+      }
+    });
+
+    // Also hide by tab IDs
+    const tabsToHideById = ["#resources-tab", "#settings-tab", "#help-tab"];
+    tabsToHideById.forEach((tabId) => {
+      const tabButton = document.querySelector(
+        `${tabId} .tab-nav button, button[data-testid*="${tabId.slice(1)}"]`
+      );
+      if (tabButton) {
+        tabButton.style.display = "none";
+        console.log(`Hidden tab by ID: ${tabId}`);
+      }
+    });
+  }
+
+  // Add elements immediately
+  addSipaduLogo();
+  hideSpecificTabs();
 
   const version_node = document.createElement("p");
   version_node.innerHTML = "version: KH_APP_VERSION";
@@ -13,7 +362,6 @@ function run() {
 
   // add favicon
   const favicon = document.createElement("link");
-  // set favicon attributes
   favicon.rel = "icon";
   favicon.type = "image/svg+xml";
   favicon.href = "/favicon.ico";
@@ -21,7 +369,7 @@ function run() {
 
   // setup conversation dropdown placeholder
   let conv_dropdown = document.querySelector("#conversation-dropdown input");
-  conv_dropdown.placeholder = "Browse conversation";
+  conv_dropdown.placeholder = "Telusuri Percakapan";
 
   // move info-expand-button
   let info_expand_button = document.getElementById("info-expand-button");
@@ -47,7 +395,6 @@ function run() {
   conv_column.style.minWidth = default_conv_column_min_width;
 
   globalThis.toggleChatColumn = () => {
-    /* get flex-grow value of chat_column */
     let flex_grow = conv_column.style.flexGrow;
     if (flex_grow == "0") {
       conv_column.style.flexGrow = "1";
@@ -76,14 +423,17 @@ function run() {
   );
   let share_conv_checkbox = document.getElementById("is-public-checkbox");
   if (share_conv_checkbox) {
-    report_div.insertBefore(share_conv_checkbox, report_div.querySelector("button"));
+    report_div.insertBefore(
+      share_conv_checkbox,
+      report_div.querySelector("button")
+    );
   }
 
   // create slider toggle
   const is_public_checkbox = document.getElementById("suggest-chat-checkbox");
   const label_element = is_public_checkbox.getElementsByTagName("label")[0];
   const checkbox_span = is_public_checkbox.getElementsByTagName("span")[0];
-  new_div = document.createElement("div");
+  let new_div = document.createElement("div");
 
   label_element.classList.add("switch");
   is_public_checkbox.appendChild(checkbox_span);
@@ -106,7 +456,7 @@ function run() {
     localStorage.setItem(key, value);
   };
   globalThis.getStorage = (key, value) => {
-    item = localStorage.getItem(key);
+    let item = localStorage.getItem(key);
     return item ? item : value;
   };
   globalThis.removeFromStorage = (key) => {
@@ -114,25 +464,21 @@ function run() {
   };
 
   // Function to scroll to given citation with ID
-  // Sleep function using Promise and setTimeout
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   globalThis.scrollToCitation = async (event) => {
-    event.preventDefault(); // Prevent the default link behavior
+    event.preventDefault();
     var citationId = event.target.getAttribute("id");
 
-    await sleep(100); // Sleep for 100 milliseconds
+    await sleep(100);
 
-    // check if modal is open
     var modal = document.getElementById("pdf-modal");
     var citation = document.querySelector('mark[id="' + citationId + '"]');
 
     if (modal.style.display == "block") {
-      // trigger on click event of PDF Preview link
       var detail_elem = citation;
-      // traverse up the DOM tree to find the parent element with tag detail
       while (detail_elem.tagName.toLowerCase() != "details") {
         detail_elem = detail_elem.parentElement;
       }
@@ -145,31 +491,25 @@ function run() {
   };
 
   globalThis.fullTextSearch = () => {
-    // Assign text selection event to last bot message
     var bot_messages = document.querySelectorAll(
       "div#main-chat-bot div.message-row.bot-row"
     );
     var last_bot_message = bot_messages[bot_messages.length - 1];
 
-    // check if the last bot message has class "text_selection"
     if (last_bot_message.classList.contains("text_selection")) {
       return;
     }
 
-    // assign new class to last message
     last_bot_message.classList.add("text_selection");
 
-    // Get sentences from evidence div
     var evidences = document.querySelectorAll(
       "#html-info-panel > div:last-child > div > details.evidence div.evidence-content"
     );
     console.log("Indexing evidences", evidences);
 
     const segmenterEn = new Intl.Segmenter("en", { granularity: "sentence" });
-    // Split sentences and save to all_segments list
     var all_segments = [];
     for (var evidence of evidences) {
-      // check if <details> tag is open
       if (!evidence.parentElement.open) {
         continue;
       }
@@ -179,9 +519,11 @@ function run() {
       }
 
       var evidence_content = evidence.textContent.replace(/[\r\n]+/g, " ");
-      sentence_it = segmenterEn.segment(evidence_content)[Symbol.iterator]();
+      let sentence_it = segmenterEn
+        .segment(evidence_content)
+        [Symbol.iterator]();
       while ((sentence = sentence_it.next().value)) {
-        segment = sentence.segment.trim();
+        let segment = sentence.segment.trim();
         if (segment) {
           all_segments.push({
             id: all_segments.length,
@@ -192,11 +534,10 @@ function run() {
     }
 
     let miniSearch = new MiniSearch({
-      fields: ["text"], // fields to index for full-text search
+      fields: ["text"],
       storeFields: ["text"],
     });
 
-    // Index all documents
     miniSearch.addAll(all_segments);
 
     last_bot_message.addEventListener("mouseup", () => {
@@ -212,22 +553,18 @@ function run() {
       var evidences = document.querySelectorAll(
         "#html-info-panel > div:last-child > div > details.evidence div.evidence-content"
       );
-      // check if modal is open
       var modal = document.getElementById("pdf-modal");
 
-      // convert all <mark> in evidences to normal text
       evidences.forEach((evidence) => {
         evidence.querySelectorAll("mark").forEach((mark) => {
           mark.outerHTML = mark.innerText;
         });
       });
 
-      // highlight matched_text in evidences
       for (var evidence of evidences) {
         var evidence_content = evidence.textContent.replace(/[\r\n]+/g, " ");
         if (evidence_content.includes(matched_text)) {
-          // select all p and li elements
-          paragraphs = evidence.querySelectorAll("p, li");
+          let paragraphs = evidence.querySelectorAll("p, li");
           for (var p of paragraphs) {
             var p_content = p.textContent.replace(/[\r\n]+/g, " ");
             if (p_content.includes(matched_text)) {
@@ -237,9 +574,7 @@ function run() {
               );
               console.log("highlighted", matched_text, "in", p);
               if (modal.style.display == "block") {
-                // trigger on click event of PDF Preview link
                 var detail_elem = p;
-                // traverse up the DOM tree to find the parent element with tag detail
                 while (detail_elem.tagName.toLowerCase() != "details") {
                   detail_elem = detail_elem.parentElement;
                 }
@@ -262,7 +597,6 @@ function run() {
       childId: "_blank",
     };
     Object.assign(opt, options);
-    // minimal error checking
     if (
       content &&
       typeof content.toString == "function" &&
@@ -270,17 +604,56 @@ function run() {
     ) {
       let child = window.open("", opt.childId, opt.window);
       child.document.write(content.toString());
-      if (opt.closeChild) child.document.close();
       return child;
     }
   };
 
   globalThis.fillChatInput = (event) => {
     let chatInput = document.querySelector("#chat-input textarea");
-    // fill the chat input with the clicked div text
     chatInput.value = "Explain " + event.target.textContent;
     var evt = new Event("change");
     chatInput.dispatchEvent(new Event("input", { bubbles: true }));
     chatInput.focus();
   };
+
+  // Improve tab switching animation
+  const tabButtons = document.querySelectorAll(".tab-nav button");
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      // Add transition effect to tabs
+      const tabs = document.querySelectorAll(".tabitem");
+      tabs.forEach((tab) => {
+        tab.style.transition = "opacity 0.3s ease";
+        tab.style.opacity = "0.5";
+        setTimeout(() => {
+          tab.style.opacity = "1";
+        }, 300);
+      });
+    });
+  });
+
+  // Set up MutationObserver to catch dynamically loaded tabs
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === "childList") {
+        hideSpecificTabs();
+        addSipaduLogo();
+      }
+    });
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  setTimeout(() => {
+    hideSpecificTabs();
+    addSipaduLogo();
+  }, 1000);
+
+  setTimeout(() => {
+    hideSpecificTabs();
+    addSipaduLogo();
+  }, 3000);
 }

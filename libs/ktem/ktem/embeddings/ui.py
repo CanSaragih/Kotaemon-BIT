@@ -277,7 +277,7 @@ class EmbeddingManagement(BasePage):
 
     def select_emb(self, emb_list, ev: gr.SelectData):
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No embedding model is loaded. Please add first")
+            gr.Info("Model embedding belum dimuat. Silakan tambahkan terlebih dahulu.")
             return ""
 
         if not ev.selected:

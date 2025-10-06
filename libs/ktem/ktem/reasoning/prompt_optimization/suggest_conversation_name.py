@@ -13,14 +13,14 @@ class SuggestConvNamePipeline(BaseComponent):
 
     llm: ChatLLM = Node(default_callback=lambda _: llms.get_default())
     SUGGEST_NAME_PROMPT_TEMPLATE = (
-        "You are an expert at suggesting good and memorable conversation name. "
-        "Based on the chat history above, "
-        "suggest a good conversation name (max 10 words). "
-        "Give answer in {lang}. Just output the conversation "
-        "name without any extra."
+        "Anda adalah ahli dalam menyarankan nama percakapan yang baik dan mudah diingat. "
+        "Berdasarkan riwayat chat di atas, "
+        "sarankan nama percakapan yang baik (maksimal 10 kata). "
+        "Berikan jawaban dalam {lang}. Cukup keluarkan nama percakapan "
+        "tanpa tambahan lainnya."
     )
     prompt_template: str = SUGGEST_NAME_PROMPT_TEMPLATE
-    lang: str = "English"
+    lang: str = "Indonesian"
 
     def run(self, chat_history: list[tuple[str, str]]) -> Document:  # type: ignore
         prompt_template = PromptTemplate(self.prompt_template)

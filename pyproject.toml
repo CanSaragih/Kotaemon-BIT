@@ -14,8 +14,8 @@ tag_filter = "v?\\d+(\\.\\d+)*.*"
 
 [project]
 name = "kotaemon-app"
-dynamic = ["version"]
-requires-python = ">= 3.10"
+version = "0.11.0"  
+requires-python = ">=3.10,<4.0" 
 description = "Kotaemon App"
 dependencies = [
     "kotaemon @ git+https://github.com/Cinnamon/kotaemon.git@main#subdirectory=libs/kotaemon",

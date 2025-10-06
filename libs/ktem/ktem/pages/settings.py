@@ -268,9 +268,9 @@ class SettingsPage(BasePage):
                 user.password = hashed_password
                 session.add(user)
                 session.commit()
-                gr.Info("Password changed")
+                gr.Info("Password diubah")
             else:
-                gr.Warning("User not found")
+                gr.Warning("User tidak ditemukan")
 
         return "", ""
 
@@ -388,7 +388,7 @@ class SettingsPage(BasePage):
             session.add(user_setting)
             session.commit()
 
-        gr.Info("Setting saved")
+        gr.Info("Pengaturan disimpan")
         return setting
 
     def components(self) -> list:

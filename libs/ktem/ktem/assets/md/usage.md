@@ -1,57 +1,55 @@
-# Basic Usage
+# Penggunaan Dasar
 
-## 1. Add your AI models
+## 1. Tambahkan model AI Anda
 
-![resources tab](https://raw.githubusercontent.com/Cinnamon/kotaemon/main/docs/images/resources-tab.png)
+![tab sumber daya](https://raw.githubusercontent.com/Cinnamon/kotaemon/main/docs/images/resources-tab.png)
 
-- The tool uses Large Language Model (LLMs) to perform various tasks in a QA pipeline.
-  So, you need to provide the application with access to the LLMs you want
-  to use.
-- You only need to provide at least one. However, tt is recommended that you include all the LLMs
-  that you have access to, you will be able to switch between them while using the
-  application.
+- Alat ini menggunakan Model Bahasa Besar (LLM) untuk melakukan berbagai tugas dalam pipeline QA.
+  Jadi, Anda perlu menyediakan aplikasi dengan akses ke LLM yang ingin Anda gunakan.
+- Anda hanya perlu menyediakan setidaknya satu. Namun, disarankan agar Anda menyertakan semua LLM
+  yang Anda miliki akses, Anda akan dapat beralih di antara mereka saat menggunakan aplikasi.
 
-To add a model:
+Untuk menambahkan model:
 
-1. Navigate to the `Resources` tab.
-2. Select the `LLMs` sub-tab.
-3. Select the `Add` sub-tab.
-4. Config the model to add:
-   - Give it a name.
-   - Pick a vendor/provider (e.g. `ChatOpenAI`).
-   - Provide the specifications.
-   - (Optional) Set the model as default.
-5. Click `Add` to add the model.
-6. Select `Embedding Models` sub-tab and repeat the step 3 to 5 to add an embedding model.
+1. Navigasi ke tab `Sumber Daya`.
+2. Pilih sub-tab `LLMs`.
+3. Pilih sub-tab `Tambah`.
+4. Konfigurasi model yang akan ditambahkan:
+   - Beri nama.
+   - Pilih vendor/penyedia (misalnya `ChatOpenAI`).
+   - Berikan spesifikasi.
+   - (Opsional) Tetapkan model sebagai default.
+5. Klik `Tambah` untuk menambahkan model.
+6. Pilih sub-tab `Model Embedding` dan ulangi langkah 3 hingga 5 untuk menambahkan model embedding.
 
 <details markdown>
 
-<summary>(Optional) Configure model via the .env file</summary>
+<summary>(Opsional) Konfigurasi model melalui file .env</summary>
 
-Alternatively, you can configure the models via the `.env` file with the information needed to connect to the LLMs. This file is located in
-the folder of the application. If you don't see it, you can create one.
+Alternatif lain, Anda dapat mengkonfigurasi model melalui file `.env` dengan informasi yang diperlukan untuk terhubung ke LLM. File ini terletak di
+folder aplikasi. Jika Anda tidak melihatnya, Anda dapat membuatnya.
 
-Currently, the following providers are supported:
+Saat ini, penyedia berikut didukung:
 
 ### OpenAI
 
-In the `.env` file, set the `OPENAI_API_KEY` variable with your OpenAI API key in order
-to enable access to OpenAI's models. There are other variables that can be modified,
-please feel free to edit them to fit your case. Otherwise, the default parameter should
-work for most people.
+Dalam file `.env`, atur variabel `OPENAI_API_KEY` dengan kunci API OpenAI Anda untuk
+mengaktifkan akses ke model OpenAI. Ada variabel lain yang dapat dimodifikasi,
+silakan edit sesuai kebutuhan Anda. Jika tidak, parameter default seharusnya
+berfungsi untuk kebanyakan orang.
 
 ```shell
 OPENAI_API_BASE=https://api.openai.com/v1
-OPENAI_API_KEY=<your OpenAI API key here>
+OPENAI_API_KEY=<kunci API OpenAI Anda di sini>
 OPENAI_CHAT_MODEL=gpt-3.5-turbo
 OPENAI_EMBEDDINGS_MODEL=text-embedding-ada-002
 ```
 
 ### Azure OpenAI
 
-For OpenAI models via Azure platform, you need to provide your Azure endpoint and API
-key. Your might also need to provide your developments' name for the chat model and the
-embedding model depending on how you set up Azure development.
+Untuk model OpenAI melalui platform Azure, Anda perlu menyediakan endpoint Azure dan kunci API
+Anda. Anda mungkin juga perlu menyediakan nama development untuk model chat dan
+model embedding tergantung bagaimana Anda menyiapkan development Azure.
 
 ```shell
 AZURE_OPENAI_ENDPOINT=
@@ -61,81 +59,83 @@ AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-35-turbo
 AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT=text-embedding-ada-002
 ```
 
-### Local models
+### Model lokal
 
-- Pros:
-- Privacy. Your documents will be stored and process locally.
-- Choices. There are a wide range of LLMs in terms of size, domain, language to choose
-  from.
-- Cost. It's free.
-- Cons:
-- Quality. Local models are much smaller and thus have lower generative quality than
-  paid APIs.
-- Speed. Local models are deployed using your machine so the processing speed is
-  limited by your hardware.
+- Keuntungan:
+- Privasi. Dokumen Anda akan disimpan dan diproses secara lokal.
+- Pilihan. Ada berbagai macam LLM dari segi ukuran, domain, bahasa untuk dipilih.
+- Biaya. Gratis.
+- Kerugian:
+- Kualitas. Model lokal jauh lebih kecil dan dengan demikian memiliki kualitas generatif yang lebih rendah dibandingkan
+  API berbayar.
+- Kecepatan. Model lokal digunakan menggunakan mesin Anda sehingga kecepatan pemrosesan
+  dibatasi oleh perangkat keras Anda.
 
-#### Find and download a LLM
+#### Cari dan unduh LLM
 
-You can search and download a LLM to be ran locally from the [Hugging Face
-Hub](https://huggingface.co/models). Currently, these model formats are supported:
+Anda dapat mencari dan mengunduh LLM untuk dijalankan secara lokal dari [Hugging Face
+Hub](https://huggingface.co/models). Saat ini, format model berikut didukung:
 
 - GGUF
 
-You should choose a model whose size is less than your device's memory and should leave
-about 2 GB. For example, if you have 16 GB of RAM in total, of which 12 GB is available,
-then you should choose a model that take up at most 10 GB of RAM. Bigger models tend to
-give better generation but also take more processing time.
+Anda harus memilih model yang ukurannya kurang dari memori perangkat Anda dan harus meninggalkan
+sekitar 2 GB. Misalnya, jika Anda memiliki 16 GB RAM secara total, di mana 12 GB tersedia,
+maka Anda harus memilih model yang menggunakan paling banyak 10 GB RAM. Model yang lebih besar cenderung
+memberikan generasi yang lebih baik tetapi juga membutuhkan waktu pemrosesan lebih lama.
 
-Here are some recommendations and their size in memory:
+Berikut beberapa rekomendasi dan ukurannya dalam memori:
 
 - [Qwen1.5-1.8B-Chat-GGUF](https://huggingface.co/Qwen/Qwen1.5-1.8B-Chat-GGUF/resolve/main/qwen1_5-1_8b-chat-q8_0.gguf?download=true):
-  around 2 GB
+  sekitar 2 GB
 
-#### Enable local models
+#### Aktifkan model lokal
 
-To add a local model to the model pool, set the `LOCAL_MODEL` variable in the `.env`
-file to the path of the model file.
+Untuk menambahkan model lokal ke pool model, atur variabel `LOCAL_MODEL` dalam file `.env`
+ke path file model.
 
 ```shell
-LOCAL_MODEL=<full path to your model file>
+LOCAL_MODEL=<path lengkap ke file model Anda>
 ```
 
-Here is how to get the full path of your model file:
+Berikut cara mendapatkan path lengkap file model Anda:
 
-- On Windows 11: right click the file and select `Copy as Path`.
+- Di Windows 11: klik kanan file dan pilih `Copy as Path`.
 </details>
 
-## 2. Upload your documents
+## 2. Unggah dokumen Anda
 
-![file index tab](https://raw.githubusercontent.com/Cinnamon/kotaemon/main/docs/images/file-index-tab.png)
+![tab indeks file](https://raw.githubusercontent.com/Cinnamon/kotaemon/main/docs/images/file-index-tab.png)
 
-In order to do QA on your documents, you need to upload them to the application first.
-Navigate to the `File Index` tab and you will see 2 sections:
+Untuk melakukan QA pada dokumen Anda, Anda perlu mengunggahnya ke aplikasi terlebih dahulu.
+Navigasi ke tab `Indeks File` dan Anda akan melihat 2 bagian:
 
-1. File upload:
-   - Drag and drop your file to the UI or select it from your file system.
-     Then click `Upload and Index`.
-   - The application will take some time to process the file and show a message once it is done.
-2. File list:
-   - This section shows the list of files that have been uploaded to the application and allows users to delete them.
+1. Unggah file:
+   - Seret dan lepas file Anda ke UI atau pilih dari sistem file Anda.
+     Lalu klik `Unggah dan Indeks`.
+   - Aplikasi akan membutuhkan waktu untuk memproses file dan menampilkan pesan setelah selesai.
+2. Daftar file:
+   - Bagian ini menampilkan daftar file yang telah diunggah ke aplikasi dan memungkinkan pengguna untuk menghapusnya.
 
-## 3. Chat with your documents
+## 3. Chat dengan dokumen Anda
 
-![chat tab](https://raw.githubusercontent.com/Cinnamon/kotaemon/main/docs/images/chat-tab.png)
+![tab chat](https://raw.githubusercontent.com/Cinnamon/kotaemon/main/docs/images/chat-tab.png)
 
-Now navigate back to the `Chat` tab. The chat tab is divided into 3 regions:
+Sekarang navigasi kembali ke tab `Chat`. Tab chat dibagi menjadi 3 wilayah:
 
-1. Conversation Settings Panel
-   - Here you can select, create, rename, and delete conversations.
-     - By default, a new conversation is created automatically if no conversation is selected.
-   - Below that you have the file index, where you can choose whether to disable, select all files, or select which files to retrieve references from.
-     - If you choose "Disabled", no files will be considered as context during chat.
-     - If you choose "Search All", all files will be considered during chat.
-     - If you choose "Select", a dropdown will appear for you to select the
-       files to be considered during chat. If no files are selected, then no
-       files will be considered during chat.
-2. Chat Panel
-   - This is where you can chat with the chatbot.
-3. Information Panel
+1. Panel Pengaturan Percakapan
+   - Di sini Anda dapat memilih, membuat, mengganti nama, dan menghapus percakapan.
+     - Secara default, percakapan baru dibuat secara otomatis jika tidak ada percakapan yang dipilih.
+   - Di bawahnya Anda memiliki indeks file, di mana Anda dapat memilih apakah akan menonaktifkan, memilih semua file, atau memilih file mana yang akan diambil referensinya.
+     - Jika Anda memilih "Nonaktif", tidak ada file yang akan dipertimbangkan sebagai konteks selama chat.
+     - Jika Anda memilih "Cari Semua", semua file akan dipertimbangkan selama chat.
+     - Jika Anda memilih "Pilih", dropdown akan muncul untuk Anda pilih
+       file yang akan dipertimbangkan selama chat. Jika tidak ada file yang dipilih, maka tidak ada
+       file yang akan dipertimbangkan selama chat.
+2. Panel Chat
+   - Di sini Anda dapat mengobrol dengan chatbot.
+3. Panel Informasi
+   - Informasi pendukung seperti bukti dan referensi yang diperoleh akan
+     ditampilkan di sini.
+4. Information Panel
    - Supporting information such as the retrieved evidence and reference will be
      displayed here.

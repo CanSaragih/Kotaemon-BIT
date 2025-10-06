@@ -51,7 +51,7 @@ class ConversationControl(BasePage):
 
     def on_building_ui(self):
         with gr.Row():
-            title_text = "Conversations" if not KH_DEMO_MODE else "Kotaemon Papers"
+            title_text = "Riwayat Percakapan" if not KH_DEMO_MODE else "Kotaemon Papers"
             gr.Markdown("## {}".format(title_text))
             self.btn_toggle_dark_mode = gr.Button(
                 value="",
@@ -102,7 +102,7 @@ class ConversationControl(BasePage):
         with gr.Row() as self._new_delete:
             self.cb_suggest_chat = gr.Checkbox(
                 value=False,
-                label="Suggest chat",
+                label="Saran Percakapan",
                 min_width=10,
                 scale=6,
                 elem_id="suggest-chat-checkbox",
@@ -111,7 +111,7 @@ class ConversationControl(BasePage):
             )
             self.cb_is_public = gr.Checkbox(
                 value=False,
-                label="Share this conversation",
+                label="Bagikan Percakapan Ini",
                 elem_id="is-public-checkbox",
                 container=False,
                 visible=not KH_DEMO_MODE and not KH_SSO_ENABLED,
@@ -189,7 +189,7 @@ class ConversationControl(BasePage):
 
         with gr.Row():
             self.conversation_rn = gr.Text(
-                label="(Enter) to save",
+                label="(Enter) untuk menyimpan",
                 placeholder="Conversation name",
                 container=True,
                 scale=5,
@@ -402,7 +402,7 @@ class ConversationControl(BasePage):
             session.commit()
 
         history = self.load_chat_history(user_id)
-        gr.Info("Conversation renamed.")
+        gr.Info("Percakapan berhasil diubah.")
         return (
             gr.update(choices=history),
             conversation_id,
@@ -437,7 +437,7 @@ class ConversationControl(BasePage):
             session.add(result)
             session.commit()
 
-        gr.Info("Chat suggestions updated.")
+        gr.Info("Saran percakapan diperbarui.")
 
     def toggle_demo_login_visibility(self, user_api_key, request: gr.Request):
         try:
@@ -463,9 +463,41 @@ class ConversationControl(BasePage):
             ]
 
     def _on_app_created(self):
-        """Reload the conversation once the app is created"""
-        self._app.app.load(
-            self.reload_conv,
-            inputs=[self._app.user_id],
-            outputs=[self.conversation],
-        )
+        """Reload the conversation once the app is created - SAFE VERSION"""
+        # ✅ SAFE: Load conversations with proper error handling
+        def safe_reload_conv(user_id):
+            print(f"🔄 safe_reload_conv called with user_id: {user_id}")
+            
+            if not user_id:
+                print("❌ No user_id provided to safe_reload_conv")
+                return gr.update(choices=[], value=None)
+            
+            try:
+                conv_list = self.load_chat_history(user_id)
+                print(f"📚 Safe reload: Loaded {len(conv_list)} conversations")
+                
+                if conv_list:
+                    # Auto-select first conversation
+                    first_conv_id = conv_list[0][1]
+                    print(f"🎯 Safe reload: Auto-selecting first conversation: {first_conv_id}")
+                    return gr.update(choices=conv_list, value=first_conv_id)
+                else:
+                    print("📝 Safe reload: No conversations found")
+                    return gr.update(choices=[], value=None)
+                    
+            except Exception as e:
+                print(f"❌ Error in safe_reload_conv: {e}")
+                return gr.update(choices=[], value=None)
+
+        # ✅ FIXED: Only register this when app is properly created
+        try:
+            self._app.app.load(
+                safe_reload_conv,
+                inputs=[self._app.user_id],
+                outputs=[self.conversation],
+                show_progress="hidden"
+            )
+            print("✅ Conversation reload handler registered successfully")
+        except Exception as e:
+            logger.error(f"Failed to register conversation reload handler: {e}")
+       

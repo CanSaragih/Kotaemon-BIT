@@ -4,13 +4,13 @@ from kotaemon.base import BaseComponent, Document, HumanMessage, Node, SystemMes
 from kotaemon.llms import ChatLLM, PromptTemplate
 
 DEFAULT_REWRITE_PROMPT = (
-    "Given the following question, rephrase and expand it "
-    "to help you do better answering. Maintain all information "
-    "in the original question. Keep the question as concise as possible. "
-    "Only output the rephrased question without additional information. "
-    "Give answer in {lang}\n"
-    "Original question: {question}\n"
-    "Rephrased question: "
+    "Diberikan pertanyaan berikut, rumuskan ulang dan kembangkan "
+    "untuk membantu Anda menjawab dengan lebih baik. Pertahankan semua informasi "
+    "dalam pertanyaan asli. Buat pertanyaan sesingkat mungkin. "
+    "Hanya keluarkan pertanyaan yang dirumuskan ulang tanpa informasi tambahan. "
+    "Berikan jawaban dalam {lang}\n"
+    "Pertanyaan asli: {question}\n"
+    "Pertanyaan yang dirumuskan ulang: "
 )
 
 
@@ -26,7 +26,7 @@ class RewriteQuestionPipeline(BaseComponent):
     llm: ChatLLM = Node(default_callback=lambda _: llms.get_default())
     rewrite_template: str = DEFAULT_REWRITE_PROMPT
 
-    lang: str = "English"
+    lang: str = "Indonesian"
 
     def run(self, question: str) -> Document:  # type: ignore
         prompt_template = PromptTemplate(self.rewrite_template)

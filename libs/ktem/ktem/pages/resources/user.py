@@ -342,7 +342,7 @@ class UserManagement(BasePage):
 
     def select_user(self, user_list, ev: gr.SelectData):
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No user is loaded. Please refresh the user list")
+            gr.Info("Pengguna belum dimuat. Silakan segarkan daftar pengguna.")
             return -1
 
         if not ev.selected:

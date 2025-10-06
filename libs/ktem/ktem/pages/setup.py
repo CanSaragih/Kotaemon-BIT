@@ -16,9 +16,9 @@ if DEFAULT_OLLAMA_URL.endswith("/"):
 
 
 DEMO_MESSAGE = (
-    "This is a public space. Please use the "
-    '"Duplicate Space" function on the top right '
-    "corner to setup your own space."
+    "Ini adalah ruang publik. Silakan gunakan "
+    'fungsi "Duplicate Space" di pojok kanan atas '
+    "untuk mengatur ruang Anda sendiri."
 )
 
 
@@ -55,20 +55,20 @@ class SetupPage(BasePage):
         self.on_building_ui()
 
     def on_building_ui(self):
-        gr.Markdown(f"# Welcome to {self._app.app_name} first setup!")
+        gr.Markdown(f"# Selamat datang di pengaturan awal SIPADU!")
         self.radio_model = gr.Radio(
             [
-                ("Cohere API (*free registration*) - recommended", "cohere"),
-                ("Google API (*free registration*)", "google"),
-                ("OpenAI API (for GPT-based models)", "openai"),
-                ("Local LLM (for completely *private RAG*)", "ollama"),
+                ("Cohere API (*registrasi gratis*) - direkomendasikan", "cohere"),
+                ("Google API (*registrasi gratis*)", "google"),
+                ("OpenAI API (untuk model berbasis GPT)", "openai"),
+                ("LLM Lokal (untuk RAG yang *sepenuhnya pribadi*)", "ollama"),
             ],
-            label="Select your model provider",
+            label="Pilih penyedia model Anda",
             value="cohere",
             info=(
-                "Note: You can change this later. "
-                "If you are not sure, go with the first option "
-                "which fits most normal users."
+                "Catatan: Anda dapat mengubah ini nanti. "
+                "Jika Anda tidak yakin, pilih opsi pertama "
+                "yang cocok untuk sebagian besar pengguna normal."
             ),
             interactive=True,
         )
@@ -76,53 +76,53 @@ class SetupPage(BasePage):
         with gr.Column(visible=False) as self.openai_option:
             gr.Markdown(
                 (
-                    "#### OpenAI API Key\n\n"
-                    "(create at https://platform.openai.com/api-keys)"
+                    "#### Kunci API OpenAI\n\n"
+                    "(buat di https://platform.openai.com/api-keys)"
                 )
             )
             self.openai_api_key = gr.Textbox(
-                show_label=False, placeholder="OpenAI API Key"
+                show_label=False, placeholder="Kunci API OpenAI"
             )
 
         with gr.Column(visible=True) as self.cohere_option:
             gr.Markdown(
                 (
-                    "#### Cohere API Key\n\n"
-                    "(register your free API key "
-                    "at https://dashboard.cohere.com/api-keys)"
+                    "#### Kunci API Cohere\n\n"
+                    "(daftarkan kunci API gratis Anda "
+                    "di https://dashboard.cohere.com/api-keys)"
                 )
             )
             self.cohere_api_key = gr.Textbox(
-                show_label=False, placeholder="Cohere API Key"
+                show_label=False, placeholder="Kunci API Cohere"
             )
 
         with gr.Column(visible=False) as self.google_option:
             gr.Markdown(
                 (
-                    "#### Google API Key\n\n"
-                    "(register your free API key "
-                    "at https://aistudio.google.com/app/apikey)"
+                    "#### Kunci API Google\n\n"
+                    "(daftarkan kunci API gratis Anda "
+                    "di https://aistudio.google.com/app/apikey)"
                 )
             )
             self.google_api_key = gr.Textbox(
-                show_label=False, placeholder="Google API Key"
+                show_label=False, placeholder="Kunci API Google"
             )
 
         with gr.Column(visible=False) as self.ollama_option:
             gr.Markdown(
                 (
-                    "#### Setup Ollama\n\n"
-                    "Download and install Ollama from "
-                    "https://ollama.com/. Check out latest models at "
+                    "#### Pengaturan Ollama\n\n"
+                    "Unduh dan instal Ollama dari "
+                    "https://ollama.com/. Lihat model terbaru di "
                     "https://ollama.com/library. "
                 )
             )
             self.ollama_model_name = gr.Textbox(
-                label="LLM model name",
+                label="Nama model LLM",
                 value=config("LOCAL_MODEL", default="qwen2.5:7b"),
             )
             self.ollama_emb_model_name = gr.Textbox(
-                label="Embedding model name",
+                label="Nama model embedding",
                 value=config("LOCAL_MODEL_EMBEDDINGS", default="nomic-embed-text"),
             )
 
@@ -131,9 +131,9 @@ class SetupPage(BasePage):
         )
 
         with gr.Row():
-            self.btn_finish = gr.Button("Proceed", variant="primary")
+            self.btn_finish = gr.Button("Lanjutkan", variant="primary")
             self.btn_skip = gr.Button(
-                "I am an advance user. Skip this.", variant="stop"
+                "Saya pengguna tingkat lanjut. Lewati ini.", variant="stop"
             )
 
     def on_register_events(self):
@@ -197,7 +197,7 @@ class SetupPage(BasePage):
     ):
         log_content = ""
         if not radio_model_value:
-            gr.Info("Skip setup models.")
+            gr.Info("Lewati pengaturan model.")
             yield gr.value(visible=False)
             return
 
@@ -304,7 +304,7 @@ class SetupPage(BasePage):
 
             try:
                 for model_name in [emb_model_name, llm_model_name]:
-                    log_content += f"- Downloading model `{model_name}` from Ollama<br>"
+                    log_content += f"- Mengunduh model `{model_name}` dari Ollama<br>"
                     yield log_content
 
                     pre_download_log = log_content
@@ -325,69 +325,69 @@ class SetupPage(BasePage):
                         yield log_content
             except Exception as e:
                 log_content += (
-                    "Make sure you have download and installed Ollama correctly. "
-                    f"Got error: {str(e)}"
+                    "Pastikan Anda telah mengunduh dan menginstal Ollama dengan benar. "
+                    f"Terjadi kesalahan: {str(e)}"
                 )
                 yield log_content
-                raise gr.Error("Failed to download model from Ollama.")
+                raise gr.Error("Gagal mengunduh model dari Ollama.")
 
         # test models connection
         llm_output = emb_output = None
 
         # LLM model
-        log_content += f"- Testing LLM model: {radio_model_value}<br>"
+        log_content += f"- Menguji model LLM: {radio_model_value}<br>"
         yield log_content
 
-        llm = llms.get(radio_model_value)  # type: ignore
-        log_content += "- Sending a message `Hi`<br>"
+        llm = llms.get(radio_model_value)
+        log_content += "- Mengirim pesan `Halo`<br>"
         yield log_content
         try:
-            llm_output = llm("Hi")
+            llm_output = llm("Halo")
         except Exception as e:
             log_content += (
-                f"<mark style='color: yellow; background: red'>- Connection failed. "
-                f"Got error:\n {str(e)}</mark>"
+                f"<mark style='color: yellow; background: red'>- Koneksi gagal. "
+                f"Terjadi kesalahan:\n {str(e)}</mark>"
             )
 
         if llm_output:
             log_content += (
-                "<mark style='background: green; color: white'>- Connection success. "
+                "<mark style='background: green; color: white'>- Koneksi berhasil. "
                 "</mark><br>"
             )
         yield log_content
 
         if llm_output:
             # embedding model
-            log_content += f"- Testing Embedding model: {radio_model_value}<br>"
+            log_content += f"- Menguji model Embedding: {radio_model_value}<br>"
             yield log_content
 
             emb = embeddings.get(radio_model_value)
-            assert emb, f"Embedding model {radio_model_value} not found."
+            assert emb, f"Model embedding {radio_model_value} tidak ditemukan."
 
-            log_content += "- Sending a message `Hi`<br>"
+            log_content += "- Mengirim pesan `Halo`<br>"
             yield log_content
             try:
-                emb_output = emb("Hi")
+                emb_output = emb("Halo")
             except Exception as e:
                 log_content += (
                     f"<mark style='color: yellow; background: red'>"
-                    "- Connection failed. "
-                    f"Got error:\n {str(e)}</mark>"
+                    "- Koneksi gagal. "
+                    f"Terjadi kesalahan:\n {str(e)}</mark>"
                 )
 
             if emb_output:
                 log_content += (
                     "<mark style='background: green; color: white'>"
-                    "- Connection success. "
+                    "- Koneksi berhasil. "
                     "</mark><br>"
                 )
             yield log_content
 
         if llm_output and emb_output:
-            gr.Info("Setup models completed successfully!")
+            gr.Info("Pengaturan model berhasil diselesaikan!")
         else:
             raise gr.Error(
-                "Setup models failed. Please verify your connection and API key."
+                "Pengaturan model gagal. Silakan verifikasi koneksi dan kunci API Anda."
             )
 
     def update_default_settings(self, radio_model_value, default_settings):

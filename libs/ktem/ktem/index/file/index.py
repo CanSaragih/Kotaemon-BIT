@@ -382,57 +382,56 @@ class FileIndex(BaseIndex):
 
         return {
             "embedding": {
-                "name": "Embedding model",
+                "name": "Model embedding",
                 "value": embedding_default,
                 "component": "dropdown",
                 "choices": embedding_choices,
-                "info": "The name of embedding model to use.",
+                "info": "Nama model embedding yang akan digunakan.",
             },
             "supported_file_types": {
-                "name": "Supported file types",
+                "name": "Jenis file yang didukung",
                 "value": ".pdf, .txt",
                 "component": "text",
-                "info": "The file types that can be indexed, separated by comma.",
+                "info": "Jenis file yang dapat diindeks, dipisahkan dengan koma.",
             },
             "max_file_size": {
-                "name": "Max file size (MB)",
+                "name": "Ukuran file maksimum (MB)",
                 "value": 1000,
                 "component": "number",
-                "info": "The maximum size of file. Set 0 to disable.",
+                "info": "Ukuran maksimum file. Atur 0 untuk menonaktifkan.",
             },
             "max_number_of_files": {
-                "name": "Max number of files that can be indexed",
+                "name": "Jumlah maksimum file yang dapat diindeks",
                 "value": 0,
                 "component": "number",
                 "info": (
-                    "The total number of files that can be indexed on the system. "
-                    "Set 0 to disable."
+                    "Jumlah total file yang dapat diindeks pada sistem. "
+                    "Atur 0 untuk menonaktifkan."
                 ),
             },
             "private": {
-                "name": "Make private",
+                "name": "Jadikan pribadi",
                 "value": False,
                 "component": "radio",
-                "choices": [("Yes", True), ("No", False)],
-                "info": "If private, files will not be accessible across users.",
+                "choices": [("Ya", True), ("Tidak", False)],
+                "info": "Jika pribadi, file tidak akan dapat diakses oleh pengguna lain.",
             },
             "chunk_size": {
-                "name": "Size of chunk (number of tokens)",
+                "name": "Ukuran potongan (jumlah token)",
                 "value": 0,
                 "component": "number",
                 "info": (
-                    "Number of tokens of each text segment. "
-                    "Set 0 to use developer setting."
+                    "Jumlah token dari setiap segmen teks. "
+                    "Atur 0 untuk menggunakan pengaturan pengembang."
                 ),
             },
             "chunk_overlap": {
-                "name": "Number of overlapping tokens between chunks",
+                "name": "Jumlah token yang tumpang tindih antar potongan",
                 "value": 0,
                 "component": "number",
                 "info": (
-                    "Number of tokens that consecutive text segments "
-                    "should overlap with each other. "
-                    "Set 0 to use developer setting."
+                    "Jumlah token yang harus tumpang tindih antara segmen teks berturut-turut. "
+                    "Atur 0 untuk menggunakan pengaturan pengembang."
                 ),
             },
         }
@@ -485,4 +484,5 @@ class FileIndex(BaseIndex):
             obj.user_id = user_id
             retrievers.append(obj)
 
+        return retrievers
         return retrievers

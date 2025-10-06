@@ -30,14 +30,14 @@ class DocSearchArgs(BaseModel):
 
 
 class DocSearchTool(BaseTool):
-    name: str = "docsearch"
+    name: str = "pencarian_dokumen"
     description: str = (
-        "A storage that contains internal documents. If you lack any specific "
-        "private information to answer the question, you can search in this "
-        "document storage. Furthermore, if you are unsure about which document that "
-        "the user refers to, likely the user already selects the target document in "
-        "this document storage, you just need to do normal search. If possible, "
-        "formulate the search query as specific as possible."
+        "Penyimpanan yang berisi dokumen internal. Jika Anda kekurangan informasi pribadi spesifik "
+        "untuk menjawab pertanyaan, Anda dapat mencari di penyimpanan dokumen ini. "
+        "Selain itu, jika Anda tidak yakin tentang dokumen mana yang dimaksud pengguna, "
+        "kemungkinan pengguna sudah memilih dokumen target di penyimpanan dokumen ini, "
+        "Anda hanya perlu melakukan pencarian normal. Jika memungkinkan, "
+        "rumuskan kueri pencarian sekhusus mungkin."
     )
     args_schema: Optional[Type[BaseModel]] = DocSearchArgs
     retrievers: list[BaseComponent] = []
@@ -124,31 +124,31 @@ TOOL_REGISTRY = {
 }
 
 DEFAULT_QA_PROMPT = (
-    "Answer the following questions as best you can. Give answer in {lang}. "
-    "You have access to the following tools:\n"
+    "Jawab pertanyaan berikut sebaik mungkin. Berikan jawaban dalam {lang}. "
+    "Anda memiliki akses ke alat-alat berikut:\n"
     "{tool_description}\n"
-    "Use the following format:\n\n"
-    "Question: the input question you must answer\n"
-    "Thought: you should always think about what to do\n\n"
-    "Action: the action to take, should be one of [{tool_names}]\n\n"
-    "Action Input: the input to the action, should be different from the action input "
-    "of the same action in previous steps.\n\n"
-    "Observation: the result of the action\n\n"
-    "... (this Thought/Action/Action Input/Observation can repeat N times)\n"
-    "#Thought: I now know the final answer\n"
-    "Final Answer: the final answer to the original input question\n\n"
-    "Begin! After each Action Input.\n\n"
-    "Question: {instruction}\n"
-    "Thought: {agent_scratchpad}\n"
+    "Gunakan format berikut:\n\n"
+    "Pertanyaan: pertanyaan input yang harus Anda jawab\n"
+    "Pemikiran: Anda harus selalu memikirkan apa yang harus dilakukan\n\n"
+    "Tindakan: tindakan yang akan diambil, harus salah satu dari [{tool_names}]\n\n"
+    "Input Tindakan: input untuk tindakan, harus berbeda dari input tindakan "
+    "dari tindakan yang sama di langkah sebelumnya.\n\n"
+    "Observasi: hasil dari tindakan\n\n"
+    "... (Pemikiran/Tindakan/Input Tindakan/Observasi ini dapat diulang N kali)\n"
+    "#Pemikiran: Sekarang saya tahu jawaban akhirnya\n"
+    "Jawaban Akhir: jawaban akhir untuk pertanyaan input asli\n\n"
+    "Mulai! Setelah setiap Input Tindakan.\n\n"
+    "Pertanyaan: {instruction}\n"
+    "Pemikiran: {agent_scratchpad}\n"
 )
 
 DEFAULT_REWRITE_PROMPT = (
-    "Given the following question, rephrase and expand it "
-    "to help you do better answering. Maintain all information "
-    "in the original question. Keep the question as concise as possible. "
-    "Give answer in {lang}\n"
-    "Original question: {question}\n"
-    "Rephrased question: "
+    "Diberikan pertanyaan berikut, rumuskan ulang dan kembangkan "
+    "untuk membantu Anda menjawab dengan lebih baik. Pertahankan semua informasi "
+    "dalam pertanyaan asli. Buat pertanyaan sesingkat mungkin. "
+    "Berikan jawaban dalam {lang}\n"
+    "Pertanyaan asli: {question}\n"
+    "Pertanyaan yang dirumuskan ulang: "
 )
 
 
@@ -303,33 +303,33 @@ class ReactAgentPipeline(BaseReasoning):
         except Exception as e:
             logger.exception(f"Failed to get LLM options: {e}")
 
-        tool_choices = ["Wikipedia", "Google", "LLM", "SearchDoc"]
+        tool_choices = ["Wikipedia", "Google", "LLM", "PencarianDokumen"]
 
         return {
             "llm": {
-                "name": "Language model",
+                "name": "Model bahasa",
                 "value": llm,
                 "component": "dropdown",
                 "choices": llm_choices,
                 "special_type": "llm",
                 "info": (
-                    "The language model to use for generating the answer. If None, "
-                    "the application default language model will be used."
+                    "Model bahasa yang digunakan untuk menghasilkan jawaban. Jika Tidak Ada, "
+                    "model bahasa default aplikasi akan digunakan."
                 ),
             },
             "tools": {
-                "name": "Tools for knowledge retrieval",
-                "value": ["SearchDoc", "LLM"],
+                "name": "Alat untuk pengambilan pengetahuan",
+                "value": ["PencarianDokumen", "LLM"],
                 "component": "checkboxgroup",
                 "choices": tool_choices,
             },
             "max_iterations": {
-                "name": "Maximum number of iterations the LLM can go through",
+                "name": "Jumlah maksimum iterasi yang dapat dilakukan LLM",
                 "value": 5,
                 "component": "number",
             },
             "qa_prompt": {
-                "name": "QA Prompt",
+                "name": "Prompt QA",
                 "value": DEFAULT_QA_PROMPT,
             },
         }
@@ -338,11 +338,11 @@ class ReactAgentPipeline(BaseReasoning):
     def get_info(cls) -> dict:
         return {
             "id": "ReAct",
-            "name": "ReAct Agent",
+            "name": "Agen ReAct",
             "description": (
-                "Implementing ReAct paradigm: https://arxiv.org/abs/2210.03629. "
-                "ReAct agent answers the user's request by iteratively formulating "
-                "plan and executing it. The agent can use multiple tools to gather "
-                "information and generate the final answer."
+                "Mengimplementasikan paradigma ReAct: https://arxiv.org/abs/2210.03629. "
+                "Agen ReAct menjawab permintaan pengguna dengan berulang kali merumuskan "
+                "rencana dan menjalankannya. Agen dapat menggunakan beberapa alat untuk mengumpulkan "
+                "informasi dan menghasilkan jawaban akhir."
             ),
         }

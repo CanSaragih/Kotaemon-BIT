@@ -20,7 +20,7 @@ KH_APP_VERSION = config("KH_APP_VERSION", None)
 if not KH_APP_VERSION:
     try:
         # Caution: This might produce the wrong version
-        # https://stackoverflow.com/a/59533071
+        # https://stackoverflojw.com/a/59533071
         KH_APP_VERSION = version(KH_PACKAGE_NAME)
     except Exception:
         KH_APP_VERSION = "local"
@@ -335,19 +335,19 @@ SETTINGS_APP: dict[str, dict] = {}
 
 SETTINGS_REASONING = {
     "use": {
-        "name": "Reasoning options",
+        "name": "Pilihan Penalaran",
         "value": None,
         "choices": [],
         "component": "radio",
     },
     "lang": {
-        "name": "Language",
-        "value": "en",
+        "name": "Bahasa",
+        "value": "id",  # Changed from "en" to "id"
         "choices": [(lang, code) for code, lang in SUPPORTED_LANGUAGE_MAP.items()],
         "component": "dropdown",
     },
     "max_context_length": {
-        "name": "Max context length (LLM)",
+        "name": "Panjang konteks maksimal (LLM)",
         "value": 32000,
         "component": "number",
     },
@@ -390,7 +390,7 @@ GRAPHRAG_INDICES = [
 
 KH_INDICES = [
     {
-        "name": "File Collection",
+        "name": "Koleksi Dokumen",
         "config": {
             "supported_file_types": (
                 ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
@@ -402,3 +402,15 @@ KH_INDICES = [
     },
     *GRAPHRAG_INDICES,
 ]
+
+# Application settings
+KH_APP_NAME = "SIPADU AI TOOLS - Sistem manajemen data dan metadata terpusat, terstruktur dan terdokumentasi"
+
+# SIPADU Integration Settings - FROM ENVIRONMENT VARIABLES
+SIPADU_API_BASE = config("SIPADU_API_BASE", default="http://localhost.sipadubapelitbangbogor")
+SIPADU_HOME_URL = f"{SIPADU_API_BASE}/home"
+SIPADU_LOGO_PATH = "libs/ktem/ktem/assets/img/logo.png"
+
+# Log configuration for debugging
+print(f"🔧 SIPADU_API_BASE: {SIPADU_API_BASE}")
+print(f"🔧 SIPADU_HOME_URL: {SIPADU_HOME_URL}")

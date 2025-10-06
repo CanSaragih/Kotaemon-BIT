@@ -1,26 +1,151 @@
 import os
+import sys
+import requests
+import json
+import gradio as gr
 
 from theflow.settings import settings as flowsettings
 
 KH_APP_DATA_DIR = getattr(flowsettings, "KH_APP_DATA_DIR", ".")
 KH_GRADIO_SHARE = getattr(flowsettings, "KH_GRADIO_SHARE", False)
 GRADIO_TEMP_DIR = os.getenv("GRADIO_TEMP_DIR", None)
+
+# SIPADU Integration Settings - FROM ENVIRONMENT
+SIPADU_API_BASE = os.getenv("SIPADU_API_BASE", "http://localhost.sipadubapelitbangor")
+SIPADU_VALIDATE_ENDPOINT = f"{SIPADU_API_BASE}/api/validate-token"
+
 # override GRADIO_TEMP_DIR if it's not set
 if GRADIO_TEMP_DIR is None:
     GRADIO_TEMP_DIR = os.path.join(KH_APP_DATA_DIR, "gradio_tmp")
     os.environ["GRADIO_TEMP_DIR"] = GRADIO_TEMP_DIR
 
+def validate_token_with_sipadu(token):
+    """Validate token with SIPADU API"""
+    if not token:
+        return False, {}, "No token provided"
+    
+    try:
+        print(f"🔐 Validating token with SIPADU: {SIPADU_VALIDATE_ENDPOINT}")
+        
+        headers = {
+            'Accept': 'application/json',
+            'User-Agent': 'Kotaemon-SSO/1.0',
+            'Connection': 'keep-alive',
+        }
+        
+        response = requests.get(
+            SIPADU_VALIDATE_ENDPOINT,
+            params={'token': token},
+            headers=headers,
+            timeout=10
+        )
+        
+        print(f"📡 Response Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if data.get('status') == True:
+                user_info = {
+                    'user_id': data.get('user_id'),
+                    'username': data.get('username'),
+                    'nama_lengkap': data.get('nama_lengkap'),
+                    'email': data.get('email'),
+                    'unit_kerja': data.get('unit_kerja'),
+                    'user_id_role': data.get('user_id_role')
+                }
+                print(f"✅ Token valid for user: {user_info.get('nama_lengkap')}")
+                return True, user_info, None
+            else:
+                error_msg = data.get('message', 'Token validation failed')
+                print(f"❌ Token invalid: {error_msg}")
+                return False, {}, error_msg
+        else:
+            error_msg = f"SIPADU API error: {response.status_code}"
+            print(f"❌ API Error: {error_msg}")
+            return False, {}, error_msg
+            
+    except requests.exceptions.RequestException as e:
+        error_msg = f"Connection error to SIPADU: {str(e)}"
+        print(f"❌ Connection Error: {error_msg}")
+        return False, {}, error_msg
+    except Exception as e:
+        error_msg = f"Validation error: {str(e)}"
+        print(f"❌ Unexpected Error: {error_msg}")
+        return False, {}, error_msg
 
-from ktem.main import App  # noqa
+def main():
+    """Simplified main function - let Gradio handle token extraction"""
+    print("="*60)
+    print("🚀 SIPADU AI Tools (Kotaemon) - Starting")
+    print("="*60)
+    
+    # Development mode check
+    if os.getenv('KOTAEMON_DEV_MODE', '').lower() == 'true':
+        print("🔧 Development mode - skipping SSO authentication")
+        auth_status = 'DEV_MODE'
+        user_data = {'username': 'dev_user', 'nama_lengkap': 'Development User'}
+    else:
+        print("🔐 Production mode - SIPADU authentication will be handled by Gradio")
+        auth_status = 'PENDING'  # Will be handled in login.py
+        user_data = {}
+    
+    # Set environment variables
+    os.environ['SIPADU_AUTH_STATUS'] = auth_status
+    os.environ['SIPADU_USER_DATA'] = json.dumps(user_data)
+    
+    print(f"🔧 Auth Status: {auth_status}")
+    print("🎯 Loading Kotaemon application...")
+    
+    # Load and launch the application
+    try:
+        from ktem.main import App
 
-app = App()
-demo = app.make()
-demo.queue().launch(
-    favicon_path=app._favicon,
-    inbrowser=True,
-    allowed_paths=[
-        "libs/ktem/ktem/assets",
-        GRADIO_TEMP_DIR,
-    ],
-    share=KH_GRADIO_SHARE,
-)
+        app = App()
+        demo = app.make()
+        
+        print("🌐 Launching Gradio interface...")
+        
+        # Enhanced launch configuration
+        launch_kwargs = {
+            "server_name": "127.0.0.1",
+            "server_port": 7860,
+            "favicon_path": getattr(app, '_favicon', None),
+            "inbrowser": True,
+            "share": KH_GRADIO_SHARE,
+            "allowed_paths": [
+                "libs/ktem/ktem/assets",
+                GRADIO_TEMP_DIR,
+            ],
+            "prevent_thread_lock": False,
+            "show_error": True,
+        }
+        
+        demo.launch(**launch_kwargs)
+        
+    except Exception as e:
+        print(f"❌ Error launching application: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+    # Debug function untuk check request
+def debug_request():
+    """Debug function to check what Gradio receives"""
+    
+    def debug_fn(request: gr.Request):
+        print("=== DEBUG REQUEST ===")
+        print(f"URL: {request.request.url if hasattr(request, 'request') else 'N/A'}")
+        print(f"Headers: {dict(request.headers)}")
+        print(f"Query Params: {request.query_params}")
+        print(f"Client: {request.client}")
+        print("=====================")
+        return "Debug completed"
+    
+    return debug_fn
+
+
+debug_fn = debug_request()
+
+if __name__ == "__main__":
+    main()

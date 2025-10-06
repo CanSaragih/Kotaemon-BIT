@@ -12,34 +12,34 @@ from kotaemon.contribs.promptui.ui.blocks import ChatBlock
 
 from ..logs import ResultLog
 
-USAGE_INSTRUCTION = """## How to use:
+USAGE_INSTRUCTION = """## Cara menggunakan:
 
-1. Set the desired parameters.
-2. Click "New chat" to start a chat session with the supplied parameters. This
-    set of parameters will persist until the end of the chat session. During an
-    ongoing chat session, changing the parameters will not take any effect.
-3. Chat and interact with the chat bot on the right panel. You can add any
-    additional input (if any), and they will be supplied to the chatbot.
-4. During chat, the log of the chat will show up in the "Output" tabs. This is
-    empty by default, so if you want to show the log here, tell the AI developers
-    to configure the UI settings.
-5. When finishing chat, select your preference in the radio box. Click "End chat".
-    This will save the chat log and the preference to disk.
-6. To compare the result of different run, click "Export" to get an Excel
-    spreadsheet summary of different run.
+1. Atur parameter yang diinginkan.
+2. Klik "Chat baru" untuk memulai sesi chat dengan parameter yang disediakan. 
+    Set parameter ini akan bertahan hingga akhir sesi chat. Selama sesi chat 
+    berlangsung, mengubah parameter tidak akan berpengaruh.
+3. Chat dan berinteraksi dengan chat bot di panel kanan. Anda dapat menambahkan 
+    input tambahan (jika ada), dan mereka akan disediakan ke chatbot.
+4. Selama chat, log chat akan muncul di tab "Output". Ini kosong secara default, 
+    jadi jika Anda ingin menampilkan log di sini, beri tahu pengembang AI untuk 
+    mengkonfigurasi pengaturan UI.
+5. Saat selesai chat, pilih preferensi Anda di kotak radio. Klik "Akhiri chat".
+    Ini akan menyimpan log chat dan preferensi ke disk.
+6. Untuk membandingkan hasil dari berbagai run, klik "Ekspor" untuk mendapatkan 
+    spreadsheet Excel rangkuman dari berbagai run.
 
-## Support:
+## Dukungan:
 
-In case of errors, you can:
+Jika terjadi error, Anda dapat:
 
-- PromptUI instruction:
+- Instruksi PromptUI:
     https://github.com/Cinnamon/kotaemon/wiki/Utilities#prompt-engineering-ui
-- Create bug fix and make PR at: https://github.com/Cinnamon/kotaemon
-- Ping any of @john @tadashi @ian @jacky in Slack channel #llm-productization
+- Buat perbaikan bug dan buat PR di: https://github.com/Cinnamon/kotaemon
+- Ping salah satu dari @john @tadashi @ian @jacky di channel Slack #llm-productization
 
-## Contribute:
+## Kontribusi:
 
-- Follow installation at: https://github.com/Cinnamon/kotaemon/
+- Ikuti instalasi di: https://github.com/Cinnamon/kotaemon/
 """
 
 
@@ -96,12 +96,12 @@ def construct_chat_ui(
     )
     param_state = gr.Textbox(interactive=False)
 
-    with gr.Blocks(analytics_enabled=False, title="Welcome to PromptUI") as demo:
+    with gr.Blocks(analytics_enabled=False, title="Selamat datang di PromptUI") as demo:
         sess.render()
-        with gr.Accordion(label="HOW TO", open=False):
+        with gr.Accordion(label="CARA PENGGUNAAN", open=False):
             gr.Markdown(USAGE_INSTRUCTION)
         with gr.Row():
-            run_btn = gr.Button("New chat")
+            run_btn = gr.Button("Chat baru")
             run_btn.click(
                 func_new_chat,
                 inputs=params,
@@ -114,36 +114,36 @@ def construct_chat_ui(
                     *outputs,
                 ],
             )
-            with gr.Accordion(label="End chat", open=False):
-                likes = gr.Radio(["like", "dislike", "neutral"], value="neutral")
+            with gr.Accordion(label="Akhiri chat", open=False):
+                likes = gr.Radio(["suka", "tidak suka", "netral"], value="netral")
                 save_log = gr.Checkbox(
                     value=True,
-                    label="Save log",
-                    info="If saved, log can be exported later",
+                    label="Simpan log",
+                    info="Jika disimpan, log dapat diekspor nanti",
                     show_label=True,
                 )
-                end_btn = gr.Button("End chat")
+                end_btn = gr.Button("Akhiri chat")
                 end_btn.click(
                     func_end_chat,
                     inputs=[likes, save_log, sess],
                     outputs=[param_state, sess],
                 )
-            with gr.Accordion(label="Export", open=False):
+            with gr.Accordion(label="Ekspor", open=False):
                 exported_file = gr.File(
-                    label="Output file", show_label=True, height=100
+                    label="File output", show_label=True, height=100
                 )
-                export_btn = gr.Button("Export")
+                export_btn = gr.Button("Ekspor")
                 export_btn.click(func_export_to_excel, inputs=[], outputs=exported_file)
 
         with gr.Row():
             with gr.Column():
-                with gr.Tab("Params"):
+                with gr.Tab("Parameter"):
                     for component in params:
                         component.render()
-                    with gr.Accordion(label="Session state", open=False):
+                    with gr.Accordion(label="Status sesi", open=False):
                         param_state.render()
 
-                with gr.Tab("Outputs"):
+                with gr.Tab("Output"):
                     for component in outputs:
                         component.render()
             with gr.Column():
@@ -178,7 +178,7 @@ def build_chat_ui(config, pipeline_def):
         Returns:
             new empty states
         """
-        gr.Info("Starting new session...")
+        gr.Info("Memulai sesi baru...")
         param_dicts = {
             name: value for name, value in zip(config["params"].keys(), args)
         }
@@ -196,7 +196,7 @@ def build_chat_ui(config, pipeline_def):
             f"- {name}: {value}" for name, value in param_dicts.items()
         )
 
-        gr.Info("New chat session started.")
+        gr.Info("Sesi chat baru dimulai.")
         return (
             [],
             [],
@@ -223,7 +223,7 @@ def build_chat_ui(config, pipeline_def):
         """
         if session is None:
             raise gr.Error(
-                "No active chat session. Please set the params and click New chat"
+                "Tidak ada sesi chat aktif. Silakan atur parameter dan klik Chat baru"
             )
 
         pred = session(message)
@@ -250,7 +250,7 @@ def build_chat_ui(config, pipeline_def):
         Returns:
             the new empty state
         """
-        gr.Info("Ending session...")
+        gr.Info("Mengakhiri sesi...")
         session.end_session()
         output_dir: Path = (
             Path(storage.url(session.config.store_result)) / session.last_run.id()
@@ -264,7 +264,7 @@ def build_chat_ui(config, pipeline_def):
 
             session = None
             param_state = ""
-            gr.Info("End session without saving log.")
+            gr.Info("Akhiri sesi tanpa menyimpan log.")
             return param_state, session
 
         # add preference result to progress
@@ -281,7 +281,7 @@ def build_chat_ui(config, pipeline_def):
 
         session = None
         param_state = ""
-        gr.Info("End session and save log.")
+        gr.Info("Akhiri sesi dan simpan log.")
         return param_state, session
 
     def export_func():
@@ -289,12 +289,12 @@ def build_chat_ui(config, pipeline_def):
             f"{pipeline_def.__module__}.{pipeline_def.__name__}_{datetime.now()}.xlsx"
         )
         path = str(exported_dir / name)
-        gr.Info(f"Begin exporting {name}...")
+        gr.Info(f"Mulai mengekspor {name}...")
         try:
             export(config=config, pipeline_def=pipeline_def, output_path=path)
         except Exception as e:
-            raise gr.Error(f"Failed to export. Please contact project's AIR: {e}")
-        gr.Info(f"Exported {name}. Please go to the `Exported file` tab to download")
+            raise gr.Error(f"Gagal mengekspor. Silakan hubungi AIR proyek: {e}")
+        gr.Info(f"Berhasil mengekspor {name}. Silakan ke tab `File yang diekspor` untuk mengunduh")
         return path
 
     demo = construct_chat_ui(

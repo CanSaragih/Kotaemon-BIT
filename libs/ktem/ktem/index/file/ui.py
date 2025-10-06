@@ -114,18 +114,18 @@ class DirectoryUpload(BasePage):
         self.on_building_ui()
 
     def on_building_ui(self):
-        with gr.Accordion(label="Directory upload", open=False):
-            gr.Markdown(f"Supported file types: {self._supported_file_types_str}")
+        with gr.Accordion(label="Unggah Direktori", open=False):
+            gr.Markdown(f"Jenis file yang didukung: {self._supported_file_types_str}")
             self.path = gr.Textbox(
-                placeholder="Directory path...", lines=1, max_lines=1, container=False
+                placeholder="Path direktori...", lines=1, max_lines=1, container=False
             )
-            with gr.Accordion("Advanced indexing options", open=False):
+            with gr.Accordion("Opsi pengindeksan lanjutan", open=False):
                 with gr.Row():
                     self.reindex = gr.Checkbox(
-                        value=False, label="Force reindex file", container=False
+                        value=False, label="Paksa reindeks file", container=False
                     )
 
-            self.upload_button = gr.Button("Upload and Index")
+            self.upload_button = gr.Button("Unggah dan Indeks")
 
 
 class FileIndexPage(BasePage):
@@ -138,8 +138,8 @@ class FileIndexPage(BasePage):
         self._supported_file_types = [
             each.strip() for each in self._supported_file_types_str.split(",")
         ]
-        self.selected_panel_false = "Selected file: (please select above)"
-        self.selected_panel_true = "Selected file: {name}"
+        self.selected_panel_false = "File terpilih: (silakan pilih di atas)"
+        self.selected_panel_true = "File terpilih: {name}"
         # TODO: on_building_ui is not correctly named if it's always called in
         # the constructor
         self.public_events = [f"onFileIndex{index.id}Changed"]
@@ -150,13 +150,13 @@ class FileIndexPage(BasePage):
     def upload_instruction(self) -> str:
         msgs = []
         if self._supported_file_types:
-            msgs.append(f"- Supported file types: {self._supported_file_types_str}")
+            msgs.append(f"- Jenis file yang didukung: {self._supported_file_types_str}")
 
         if max_file_size := self._index.config.get("max_file_size", 0):
-            msgs.append(f"- Maximum file size: {max_file_size} MB")
+            msgs.append(f"- Ukuran file maksimum: {max_file_size} MB")
 
         if max_number_of_files := self._index.config.get("max_number_of_files", 0):
-            msgs.append(f"- The index can have maximum {max_number_of_files} files")
+            msgs.append(f"- Indeks dapat memiliki maksimum {max_number_of_files} file")
 
         if msgs:
             return "\n".join(msgs)
@@ -166,21 +166,21 @@ class FileIndexPage(BasePage):
     def render_file_list(self):
         self.filter = gr.Textbox(
             value="",
-            label="Filter by name:",
+            label="Filter berdasarkan nama:",
             info=(
-                "(1) Case-insensitive. "
-                "(2) Search with empty string to show all files."
+                "(1) Tidak peka huruf besar/kecil. "
+                "(2) Cari dengan string kosong untuk menampilkan semua file."
             ),
         )
         self.file_list_state = gr.State(value=None)
         self.file_list = gr.DataFrame(
             headers=[
                 "id",
-                "name",
-                "size",
-                "tokens",
-                "loader",
-                "date_created",
+                "nama",
+                "ukuran",
+                "token",
+                "pemuat",
+                "tanggal_dibuat",
             ],
             column_widths=["0%", "50%", "8%", "7%", "15%", "20%"],
             interactive=False,
@@ -191,21 +191,21 @@ class FileIndexPage(BasePage):
         with gr.Row():
 
             self.chat_button = gr.Button(
-                "Go to Chat",
+                "Ke Chat",
                 visible=False,
             )
             self.is_zipped_state = gr.State(value=False)
             self.download_single_button = gr.DownloadButton(
-                "Download",
+                "Unduh",
                 visible=False,
             )
             self.delete_button = gr.Button(
-                "Delete",
+                "Hapus",
                 variant="stop",
                 visible=False,
             )
             self.deselect_button = gr.Button(
-                "Close",
+                "Tutup",
                 visible=False,
             )
 
@@ -216,30 +216,30 @@ class FileIndexPage(BasePage):
 
         self.chunks = gr.HTML(visible=False)
 
-        with gr.Accordion("Advance options", open=False):
+        with gr.Accordion("Opsi lanjutan", open=False):
             with gr.Row():
                 if not KH_SSO_ENABLED:
                     self.download_all_button = gr.DownloadButton(
-                        "Download all files",
+                        "Unduh semua file",
                     )
                 self.delete_all_button = gr.Button(
-                    "Delete all files",
+                    "Hapus semua file",
                     variant="stop",
                     visible=True,
                 )
                 self.delete_all_button_confirm = gr.Button(
-                    "Confirm delete", variant="stop", visible=False
+                    "Konfirmasi hapus", variant="stop", visible=False
                 )
-                self.delete_all_button_cancel = gr.Button("Cancel", visible=False)
+                self.delete_all_button_cancel = gr.Button("Batal", visible=False)
 
     def render_group_list(self):
         self.group_list_state = gr.State(value=None)
         self.group_list = gr.DataFrame(
             headers=[
                 "id",
-                "name",
-                "files",
-                "date_created",
+                "nama",
+                "file",
+                "tanggal_dibuat",
             ],
             column_widths=["0%", "25%", "55%", "20%"],
             interactive=False,
@@ -248,20 +248,20 @@ class FileIndexPage(BasePage):
 
         with gr.Row():
             self.group_add_button = gr.Button(
-                "Add",
+                "Tambah",
                 variant="primary",
             )
             self.group_chat_button = gr.Button(
-                "Go to Chat",
+                "Ke Chat",
                 visible=False,
             )
             self.group_delete_button = gr.Button(
-                "Delete",
+                "Hapus",
                 variant="stop",
                 visible=False,
             )
             self.group_close_button = gr.Button(
-                "Close",
+                "Tutup",
                 visible=False,
             )
 
@@ -269,17 +269,17 @@ class FileIndexPage(BasePage):
             self.selected_group_id = gr.State(value=None)
             self.group_label = gr.Markdown()
             self.group_name = gr.Textbox(
-                label="Group name",
-                placeholder="Group name",
+                label="Nama grup",
+                placeholder="Nama grup",
                 lines=1,
                 max_lines=1,
             )
             self.group_files = gr.Dropdown(
-                label="Attached files",
+                label="File terlampir",
                 multiselect=True,
             )
             self.group_save_button = gr.Button(
-                "Save",
+                "Simpan",
                 variant="primary",
             )
 
@@ -288,7 +288,7 @@ class FileIndexPage(BasePage):
         with gr.Row():
             with gr.Column(scale=1):
                 with gr.Column() as self.upload:
-                    with gr.Tab("Upload Files"):
+                    with gr.Tab("Unggah File"):
                         self.files = File(
                             file_types=self._supported_file_types,
                             file_count="multiple",
@@ -300,43 +300,43 @@ class FileIndexPage(BasePage):
                         if msg:
                             gr.Markdown(msg)
 
-                    with gr.Tab("Use Web Links"):
+                    with gr.Tab("Gunakan Tautan Web"):
                         self.urls = gr.Textbox(
-                            label="Input web URLs",
+                            label="Masukkan URL web",
                             lines=8,
                         )
-                        gr.Markdown("(separated by new line)")
+                        gr.Markdown("(dipisahkan dengan baris baru)")
 
-                    with gr.Accordion("Advanced indexing options", open=False):
+                    with gr.Accordion("Opsi pengindeksan lanjutan", open=False):
                         with gr.Row():
                             self.reindex = gr.Checkbox(
-                                value=False, label="Force reindex file", container=False
+                                value=False, label="Paksa reindeks file", container=False
                             )
 
                     self.upload_button = gr.Button(
-                        "Upload and Index", variant="primary"
+                        "Unggah dan Indeks", variant="primary"
                     )
 
             with gr.Column(scale=4):
                 with gr.Column(visible=False) as self.upload_progress_panel:
-                    gr.Markdown("## Upload Progress")
+                    gr.Markdown("## Progres Unggahan")
                     with gr.Row():
                         self.upload_result = gr.Textbox(
-                            lines=1, max_lines=20, label="Upload result"
+                            lines=1, max_lines=20, label="Hasil unggahan"
                         )
                         self.upload_info = gr.Textbox(
-                            lines=1, max_lines=20, label="Upload info"
+                            lines=1, max_lines=20, label="Info unggahan"
                         )
                     self.btn_close_upload_progress_panel = gr.Button(
-                        "Clear Upload Info and Close",
+                        "Hapus Info Unggahan dan Tutup",
                         variant="secondary",
                         elem_classes=["right-button"],
                     )
 
-                with gr.Tab("Files"):
+                with gr.Tab("File"):
                     self.render_file_list()
 
-                with gr.Tab("Groups"):
+                with gr.Tab("Grup"):
                     self.render_group_list()
 
     def on_subscribe_public_events(self):
@@ -355,10 +355,11 @@ class FileIndexPage(BasePage):
         )
 
         if self._app.f_user_management:
+            # ✅ ENHANCED: onSignIn event dengan immediate file loading
             self._app.subscribe_event(
                 name="onSignIn",
                 definition={
-                    "fn": self.list_file,
+                    "fn": self.reload_files_after_signin,
                     "inputs": [self._app.user_id],
                     "outputs": [self.file_list_state, self.file_list],
                     "show_progress": "hidden",
@@ -391,6 +392,70 @@ class FileIndexPage(BasePage):
                     "show_progress": "hidden",
                 },
             )
+
+    def reload_files_after_signin(self, user_id):
+        """Enhanced function to reload files after sign-in - FIXED VERSION"""
+        print(f"📁 Reloading files after sign-in for user: {user_id}")
+        
+        if not user_id:
+            print("❌ No user_id provided for file reload")
+            return [], gr.update()
+        
+        try:
+            # ✅ ENHANCED: Load files immediately after authentication
+            file_list_state, file_list_df = self.list_file(user_id, "")
+            print(f"📚 Loaded {len(file_list_state)} files for user {user_id}")
+            
+            if file_list_state:
+                print(f"✅ Files loaded successfully: {[f['name'] for f in file_list_state[:3]]}...")
+            else:
+                print("📝 No files found for user")
+                
+            return file_list_state, file_list_df
+                
+        except Exception as e:
+            print(f"❌ Error reloading files: {e}")
+            return [], gr.update()
+
+    def _on_app_created(self):
+        """Called when the app is created - ENHANCED VERSION"""
+        if KH_DEMO_MODE:
+            return
+
+        # ✅ ENHANCED: Load files with proper error handling and timing
+        def safe_load_files_on_startup(user_id):
+            print(f"📁 safe_load_files_on_startup called with user_id: {user_id}")
+            
+            if not user_id:
+                print("❌ No user_id provided to safe_load_files_on_startup")
+                return [], gr.update(), [], gr.update()
+            
+            try:
+                # Load files
+                file_list_state, file_list_df = self.list_file(user_id, "")
+                print(f"📚 Startup: Loaded {len(file_list_state)} files")
+                
+                # Load groups
+                group_list_state, group_list_df = self.list_group(user_id, file_list_state)
+                print(f"📚 Startup: Loaded {len(group_list_state)} groups")
+                
+                return file_list_state, file_list_df, group_list_state, group_list_df
+                    
+            except Exception as e:
+                print(f"❌ Error in safe_load_files_on_startup: {e}")
+                return [], gr.update(), [], gr.update()
+
+        self._app.app.load(
+            safe_load_files_on_startup,
+            inputs=[self._app.user_id],
+            outputs=[self.file_list_state, self.file_list, self.group_list_state, self.group_list],
+            show_progress="hidden"
+        ).then(
+            self.list_file_names,
+            inputs=[self.file_list_state],
+            outputs=[self.group_files],
+            show_progress="hidden"
+        )
 
     def file_selected(self, file_id):
         chunks = []
@@ -578,7 +643,7 @@ class FileIndexPage(BasePage):
         if len(file_list) == 0 or (
             len(file_list) == 1 and file_list.id.values[0] == "-"
         ):
-            gr.Info("No file to delete")
+            gr.Info("Tidak ada file untuk dihapus")
             return [
                 gr.update(visible=True),
                 gr.update(visible=False),
@@ -607,8 +672,8 @@ class FileIndexPage(BasePage):
                     quickUploadedEvent = (
                         self._app.chat_page.quick_file_upload.upload(
                             fn=lambda: gr.update(
-                                value="Please wait for the indexing process "
-                                "to complete before adding your question."
+                                value="Harap tunggu proses pengindeksan "
+                                "selesai sebelum menambahkan pertanyaan Anda."
                             ),
                             outputs=self._app.chat_page.quick_file_upload_status,
                         )
@@ -646,7 +711,7 @@ class FileIndexPage(BasePage):
                             outputs=self._app.chat_page._indices_input[1],
                         )
                         .then(
-                            fn=lambda: gr.update(value="Indexing completed."),
+                            fn=lambda: gr.update(value="Pengindeksan selesai."),
                             outputs=self._app.chat_page.quick_file_upload_status,
                         )
                         .then(
@@ -666,8 +731,8 @@ class FileIndexPage(BasePage):
                 quickURLUploadedEvent = (
                     self._app.chat_page.quick_urls.submit(
                         fn=lambda: gr.update(
-                            value="Please wait for the indexing process "
-                            "to complete before adding your question."
+                            value="Harap tunggu proses pengindeksan "
+                            "selesai sebelum menambahkan pertanyaan Anda."
                         ),
                         outputs=self._app.chat_page.quick_file_upload_status,
                     )
@@ -701,7 +766,7 @@ class FileIndexPage(BasePage):
                     inputs=self.quick_upload_state,
                     outputs=self._app.chat_page._indices_input[1],
                 ).then(
-                    fn=lambda: gr.update(value="Indexing completed."),
+                    fn=lambda: gr.update(value="Pengindeksan selesai."),
                     outputs=self._app.chat_page.quick_file_upload_status,
                 )
 
@@ -957,7 +1022,7 @@ class FileIndexPage(BasePage):
         self.group_add_button.click(
             fn=lambda: [
                 gr.update(visible=False),
-                gr.update(value="### Add new group"),
+                gr.update(value="### Tambah grup baru"),
                 gr.update(visible=True),
                 gr.update(value=""),
                 gr.update(value=[]),
@@ -1106,7 +1171,7 @@ class FileIndexPage(BasePage):
             errors = self.validate_urls(files)
         else:
             if not files:
-                gr.Info("No uploaded file")
+                gr.Info("Tidak ada file untuk diunggah")
                 yield "", ""
                 return
             files, unzip_errors = self._may_extract_zip(
@@ -1120,7 +1185,7 @@ class FileIndexPage(BasePage):
             yield "", ""
             return
 
-        gr.Info(f"Start indexing {len(files)} files...")
+        gr.Info(f"Mulai mengindeks {len(files)} file...")
 
         # get the pipeline
         indexing_pipeline = self._index.get_indexing_pipeline(settings, user_id)
@@ -1153,10 +1218,10 @@ class FileIndexPage(BasePage):
 
         n_successes = len([_ for _ in results if _])
         if n_successes:
-            gr.Info(f"Successfully index {n_successes} files")
+            gr.Info(f"Berhasil mengindeks {n_successes} file")
         n_errors = len([_ for _ in errors if _])
         if n_errors:
-            gr.Warning(f"Have errors for {n_errors} files")
+            gr.Warning(f"Ada error untuk {n_errors} file")
 
         return results
 
@@ -1513,7 +1578,7 @@ class FileIndexPage(BasePage):
                     .first()
                 )
                 if current_group:
-                    raise gr.Error(f"Group {group_name} already exists")
+                    raise gr.Error(f"Grup {group_name} sudah ada")
 
                 current_group = FileGroup(
                     name=group_name,
@@ -1525,12 +1590,12 @@ class FileIndexPage(BasePage):
 
             group_id = current_group.id
 
-        gr.Info(f"Group {group_name} has been saved")
+        gr.Info(f"Grup {group_name} telah disimpan")
         return group_id
 
     def delete_group(self, group_id):
         if not group_id:
-            raise gr.Error("No group is selected")
+            raise gr.Error("Tidak ada grup yang dipilih")
 
         FileGroup = self._index._resources["FileGroup"]
         with Session(engine) as session:
@@ -1542,15 +1607,15 @@ class FileIndexPage(BasePage):
                 group_name = item.name
                 session.delete(item)
                 session.commit()
-                gr.Info(f"Group {group_name} has been deleted")
+                gr.Info(f"Grup {group_name} telah dihapus")
             else:
-                raise gr.Error("No group found")
+                raise gr.Error("Grup tidak ditemukan")
 
         return None
 
     def interact_file_list(self, list_files, ev: gr.SelectData):
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No file is uploaded")
+            gr.Info("Tidak ada file yang diunggah")
             return None, self.selected_panel_false
 
         if not ev.selected:
@@ -1563,12 +1628,12 @@ class FileIndexPage(BasePage):
     def interact_group_list(self, list_groups, ev: gr.SelectData):
         selected_id = ev.index[0]
         if (not ev.value or ev.value == "-") and selected_id == 0:
-            raise gr.Error("No group is selected")
+            raise gr.Error("Tidak ada grup yang dipilih")
 
         selected_item = list_groups[selected_id]
         selected_group_id = selected_item["id"]
         return (
-            "### Group Information",
+            "### Informasi Grup",
             selected_group_id,
             selected_item["name"],
             selected_item["files"],
@@ -1588,7 +1653,7 @@ class FileIndexPage(BasePage):
                 if len(str_errors) > 60:
                     str_errors = str_errors[:55] + "..."
                 errors.append(
-                    f"Maximum file size ({max_file_size} MB) exceeded: {str_errors}"
+                    f"Ukuran file maksimum ({max_file_size} MB) terlampaui: {str_errors}"
                 )
 
         if max_number_of_files := self._index.config.get("max_number_of_files", 0):
@@ -1598,7 +1663,7 @@ class FileIndexPage(BasePage):
                 ).count()
             if len(paths) + current_num_files > max_number_of_files:
                 errors.append(
-                    f"Maximum number of files ({max_number_of_files}) will be exceeded"
+                    f"Jumlah file maksimum ({max_number_of_files}) akan terlampaui"
                 )
 
         return errors
@@ -1608,7 +1673,7 @@ class FileIndexPage(BasePage):
         errors = []
         for url in urls:
             if not url.startswith("http") and not url.startswith("https"):
-                errors.append(f"Invalid url `{url}`")
+                errors.append(f"URL tidak valid `{url}`")
         return errors
 
 
@@ -1631,13 +1696,13 @@ class FileSelector(BasePage):
         self.mode = gr.Radio(
             value=default_mode,
             choices=[
-                ("Search All", "all"),
-                ("Search In File(s)", "select"),
+                ("Cari Semua", "all"),
+                ("Cari Dalam File", "select"),
             ],
             container=False,
         )
         self.selector = gr.Dropdown(
-            label="Files",
+            label="File",
             value=default_selector,
             choices=[],
             multiselect=True,
@@ -1754,13 +1819,53 @@ class FileSelector(BasePage):
             },
         )
         if self._app.f_user_management:
+            # ✅ ENHANCED: onSignIn dan onSignOut events untuk file selector
             for event_name in ["onSignIn", "onSignOut"]:
                 self._app.subscribe_event(
                     name=event_name,
                     definition={
-                        "fn": self.load_files,
+                        "fn": self.reload_files_for_selector,
                         "inputs": [self.selector, self._app.user_id],
                         "outputs": [self.selector, self.selector_choices],
                         "show_progress": "hidden",
                     },
                 )
+
+    def reload_files_for_selector(self, selected_files, user_id):
+        """Enhanced file loading for selector after authentication"""
+        print(f"📁 Reloading files for selector, user: {user_id}")
+        
+        if not user_id:
+            print("❌ No user_id for selector file reload")
+            return gr.update(choices=[], value=[]), []
+        
+        try:
+            selector_update, choices = self.load_files(selected_files, user_id)
+            print(f"📚 Selector: Loaded {len(choices)} file choices")
+            return selector_update, choices
+        except Exception as e:
+            print(f"❌ Error reloading files for selector: {e}")
+            return gr.update(choices=[], value=[]), []
+
+    def _on_app_created(self):
+        # ✅ ENHANCED: Load files on app startup with better error handling
+        def safe_load_selector_files(user_id):
+            print(f"📁 Loading selector files on startup for user: {user_id}")
+            
+            if not user_id:
+                return gr.update(choices=[], value=[]), []
+            
+            try:
+                selector_update, choices = self.load_files([], user_id)
+                print(f"📚 Startup selector: Loaded {len(choices)} choices")
+                return selector_update, choices
+            except Exception as e:
+                print(f"❌ Error loading selector files on startup: {e}")
+                return gr.update(choices=[], value=[]), []
+
+        self._app.app.load(
+            safe_load_selector_files,
+            inputs=[self._app.user_id],
+            outputs=[self.selector, self.selector_choices],
+            show_progress="hidden"
+        )

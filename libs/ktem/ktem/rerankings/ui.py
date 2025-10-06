@@ -276,7 +276,7 @@ class RerankingManagement(BasePage):
 
     def select_rerank(self, rerank_list, ev: gr.SelectData):
         if ev.value == "-" and ev.index[0] == 0:
-            gr.Info("No reranking model is loaded. Please add first")
+            gr.Info("Model reranking belum dimuat. Silakan tambahkan terlebih dahulu.")
             return ""
 
         if not ev.selected:

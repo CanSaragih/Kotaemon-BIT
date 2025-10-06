@@ -27,38 +27,38 @@ DEFAULT_AGENT_STEPS = 4
 
 
 DEFAULT_PLANNER_PROMPT = (
-    "You are an AI agent who makes step-by-step plans to solve a problem under the "
-    "help of external tools. For each step, make one plan followed by one tool-call, "
-    "which will be executed later to retrieve evidence for that step.\n"
-    "You should store each evidence into a distinct variable #E1, #E2, #E3 ... that "
-    "can be referred to in later tool-call inputs.\n\n"
-    "##Available Tools##\n"
+    "Anda adalah agen AI yang membuat rencana langkah demi langkah untuk memecahkan masalah dengan "
+    "bantuan alat eksternal. Untuk setiap langkah, buat satu rencana diikuti dengan satu panggilan alat, "
+    "yang akan dieksekusi nanti untuk mengambil bukti untuk langkah tersebut.\n"
+    "Anda harus menyimpan setiap bukti ke dalam variabel yang berbeda #E1, #E2, #E3 ... yang "
+    "dapat dirujuk dalam input panggilan alat selanjutnya.\n\n"
+    "##Alat yang Tersedia##\n"
     "{tool_description}\n\n"
-    "##Output Format (Replace '<...>')##\n"
-    "#Plan1: <describe your plan here>\n"
-    "#E1: <toolname>[<input here>] (eg. Search[What is Python])\n"
-    "#Plan2: <describe next plan>\n"
-    "#E2: <toolname>[<input here, you can use #E1 to represent its expected output>]\n"
-    "And so on...\n\n"
-    "##Your Task##\n"
+    "##Format Output (Ganti '<...>')##\n"
+    "#Plan1: <jelaskan rencana Anda di sini>\n"
+    "#E1: <namaAlat>[<input di sini>] (mis. Search[Apa itu Python])\n"
+    "#Plan2: <jelaskan rencana berikutnya>\n"
+    "#E2: <namaAlat>[<input di sini, Anda dapat menggunakan #E1 untuk mewakili output yang diharapkan>]\n"
+    "Dan seterusnya...\n\n"
+    "##Tugas Anda##\n"
     "{task}\n\n"
-    "##Now Begin##\n"
+    "##Mulai Sekarang##\n"
 )
 
 DEFAULT_SOLVER_PROMPT = (
-    "You are an AI agent who solves a problem with my assistance. I will provide "
-    "step-by-step plans(#Plan) and evidences(#E) that could be helpful.\n"
-    "Your task is to briefly summarize each step, then make a short final conclusion "
-    "for your task. Give answer in {lang}.\n\n"
-    "##My Plans and Evidences##\n"
+    "Anda adalah agen AI yang memecahkan masalah dengan bantuan saya. Saya akan memberikan "
+    "rencana langkah demi langkah (#Plan) dan bukti (#E) yang bisa membantu.\n"
+    "Tugas Anda adalah merangkum setiap langkah secara singkat, lalu membuat kesimpulan akhir yang singkat "
+    "untuk tugas Anda. Berikan jawaban dalam {lang}.\n\n"
+    "##Rencana dan Bukti Saya##\n"
     "{plan_evidence}\n\n"
-    "##Example Output##\n"
-    "First, I <did something> , and I think <...>; Second, I <...>, "
-    "and I think <...>; ....\n"
-    "So, <your conclusion>.\n\n"
-    "##Your Task##\n"
+    "##Contoh Output##\n"
+    "Pertama, saya <melakukan sesuatu>, dan saya pikir <...>; Kedua, saya <...>, "
+    "dan saya pikir <...>; ....\n"
+    "Jadi, <kesimpulan Anda>.\n\n"
+    "##Tugas Anda##\n"
     "{task}\n\n"
-    "##Now Begin##\n"
+    "##Mulai Sekarang##\n"
 )
 
 
@@ -67,14 +67,14 @@ class DocSearchArgs(BaseModel):
 
 
 class DocSearchTool(BaseTool):
-    name: str = "docsearch"
+    name: str = "pencarian_dokumen"
     description: str = (
-        "A storage that contains internal documents. If you lack any specific "
-        "private information to answer the question, you can search in this "
-        "document storage. Furthermore, if you are unsure about which document that "
-        "the user refers to, likely the user already selects the target document in "
-        "this document storage, you just need to do normal search. If possible, "
-        "formulate the search query as specific as possible."
+        "Penyimpanan yang berisi dokumen internal. Jika Anda kekurangan informasi pribadi spesifik "
+        "untuk menjawab pertanyaan, Anda dapat mencari di penyimpanan dokumen ini. "
+        "Selain itu, jika Anda tidak yakin tentang dokumen mana yang dimaksud pengguna, "
+        "kemungkinan pengguna sudah memilih dokumen target di penyimpanan dokumen ini, "
+        "Anda hanya perlu melakukan pencarian normal. Jika memungkinkan, "
+        "rumuskan kueri pencarian sekhusus mungkin."
     )
     args_schema: Optional[Type[BaseModel]] = DocSearchArgs
     retrievers: list[BaseComponent] = []
@@ -162,12 +162,12 @@ TOOL_REGISTRY = {
 }
 
 DEFAULT_REWRITE_PROMPT = (
-    "Given the following question, rephrase and expand it "
-    "to help you do better answering. Maintain all information "
-    "in the original question. Keep the question as concise as possible. "
-    "Give answer in {lang}\n"
-    "Original question: {question}\n"
-    "Rephrased question: "
+    "Diberikan pertanyaan berikut, rumuskan ulang dan kembangkan "
+    "untuk membantu Anda menjawab dengan lebih baik. Pertahankan semua informasi "
+    "dalam pertanyaan asli. Buat pertanyaan sesingkat mungkin. "
+    "Berikan jawaban dalam {lang}\n"
+    "Pertanyaan asli: {question}\n"
+    "Pertanyaan yang dirumuskan ulang: "
 )
 
 
@@ -440,50 +440,50 @@ class RewooAgentPipeline(BaseReasoning):
         except Exception as e:
             logger.exception(f"Failed to get LLM options: {e}")
 
-        tool_choices = ["Wikipedia", "Google", "LLM", "SearchDoc"]
+        tool_choices = ["Wikipedia", "Google", "LLM", "PencarianDokumen"]
 
         return {
             "planner_llm": {
-                "name": "Language model for Planner",
+                "name": "Model bahasa untuk Perencana",
                 "value": llm,
                 "component": "dropdown",
                 "choices": llm_choices,
                 "special_type": "llm",
                 "info": (
-                    "The language model to use for planning. "
-                    "This model will generate a plan based on the "
-                    "instruction to find the answer."
+                    "Model bahasa yang digunakan untuk perencanaan. "
+                    "Model ini akan menghasilkan rencana berdasarkan "
+                    "instruksi untuk menemukan jawaban."
                 ),
             },
             "solver_llm": {
-                "name": "Language model for Solver",
+                "name": "Model bahasa untuk Pemecah",
                 "value": llm,
                 "component": "dropdown",
                 "choices": llm_choices,
                 "special_type": "llm",
                 "info": (
-                    "The language model to use for solving. "
-                    "This model will generate the answer based on the "
-                    "plan generated by the planner and evidences found by the tools."
+                    "Model bahasa yang digunakan untuk memecahkan. "
+                    "Model ini akan menghasilkan jawaban berdasarkan "
+                    "rencana yang dihasilkan perencana dan bukti yang ditemukan alat."
                 ),
             },
             "highlight_citation": {
-                "name": "Highlight Citation",
+                "name": "Sorot Kutipan",
                 "value": False,
                 "component": "checkbox",
             },
             "tools": {
-                "name": "Tools for knowledge retrieval",
-                "value": ["SearchDoc", "LLM"],
+                "name": "Alat untuk pengambilan pengetahuan",
+                "value": ["PencarianDokumen", "LLM"],
                 "component": "checkboxgroup",
                 "choices": tool_choices,
             },
             "planner_prompt": {
-                "name": "Planner Prompt",
+                "name": "Prompt Perencana",
                 "value": DEFAULT_PLANNER_PROMPT,
             },
             "solver_prompt": {
-                "name": "Solver Prompt",
+                "name": "Prompt Pemecah",
                 "value": DEFAULT_SOLVER_PROMPT,
             },
         }
@@ -492,12 +492,12 @@ class RewooAgentPipeline(BaseReasoning):
     def get_info(cls) -> dict:
         return {
             "id": "ReWOO",
-            "name": "ReWOO Agent",
+            "name": "Agen ReWOO",
             "description": (
-                "Implementing ReWOO paradigm: https://arxiv.org/abs/2305.18323. "
-                "The ReWOO agent makes a step by step plan in the first stage, "
-                "then solves each step in the second stage. The agent can use "
-                "external tools to help in the reasoning process. Once all stages "
-                "are completed, the agent will summarize the answer."
+                "Mengimplementasikan paradigma ReWOO: https://arxiv.org/abs/2305.18323. "
+                "Agen ReWOO membuat rencana langkah demi langkah di tahap pertama, "
+                "kemudian menyelesaikan setiap langkah di tahap kedua. Agen dapat menggunakan "
+                "alat eksternal untuk membantu dalam proses penalaran. Setelah semua tahap "
+                "selesai, agen akan merangkum jawabannya."
             ),
         }

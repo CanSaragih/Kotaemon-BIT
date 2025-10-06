@@ -47,25 +47,25 @@ class AddQueryContextPipeline(BaseComponent):
     def run(self, question: str, history: list) -> Document:
         messages = [
             SystemMessage(
-                content="Below is a history of the conversation so far, and a new "
-                "question asked by the user that needs to be answered by searching "
-                "in a knowledge base.\nYou have access to a Search index "
-                "with 100's of documents.\nGenerate a search query based on the "
-                "conversation and the new question.\nDo not include cited source "
-                "filenames and document names e.g info.txt or doc.pdf in the search "
-                "query terms.\nDo not include any text inside [] or <<>> in the "
-                "search query terms.\nDo not include any special characters like "
-                "'+'.\nIf the question is not in English, rewrite the query in "
-                "the language used in the question.\n If the question contains enough "
-                "information, return just the number 1\n If it's unnecessary to do "
-                "the searching, return just the number 0."
+                content="Berikut adalah riwayat percakapan sejauh ini, dan pertanyaan baru "
+                "yang diajukan oleh pengguna yang perlu dijawab dengan mencari "
+                "di basis pengetahuan.\nAnda memiliki akses ke indeks Pencarian "
+                "dengan ratusan dokumen.\nBuat kueri pencarian berdasarkan "
+                "percakapan dan pertanyaan baru.\nJangan sertakan nama file sumber "
+                "yang dikutip dan nama dokumen seperti info.txt atau doc.pdf dalam "
+                "istilah kueri pencarian.\nJangan sertakan teks apa pun di dalam [] "
+                "atau <<>> dalam istilah kueri pencarian.\nJangan sertakan karakter "
+                "khusus seperti '+'.\nJika pertanyaan tidak dalam bahasa Indonesia, "
+                "tulis ulang kueri dalam bahasa yang digunakan dalam pertanyaan.\n "
+                "Jika pertanyaan mengandung informasi yang cukup, kembalikan angka 1\n "
+                "Jika tidak perlu melakukan pencarian, kembalikan angka 0."
             ),
-            HumanMessage(content="How did crypto do last year?"),
+            HumanMessage(content="Bagaimana kinerja crypto tahun lalu?"),
             AIMessage(
-                content="Summarize Cryptocurrency Market Dynamics from last year"
+                content="Rangkum Dinamika Pasar Cryptocurrency dari tahun lalu"
             ),
-            HumanMessage(content="What are my health plans?"),
-            AIMessage(content="Show available health plans"),
+            HumanMessage(content="Apa rencana kesehatan saya?"),
+            AIMessage(content="Tampilkan rencana kesehatan yang tersedia"),
         ]
         for human, ai in history[-self.n_last_interactions :]:
             messages.append(HumanMessage(content=human))
@@ -229,7 +229,7 @@ class FullQAPipeline(BaseReasoning):
         citation_plot_output = self.prepare_citation_viz(answer, question, docs)
 
         if not with_citation and not without_citation:
-            yield Document(channel="info", content="<h5><b>No evidence found.</b></h5>")
+            yield Document(channel="info", content="<h5><b>Tidak ada bukti yang ditemukan.</b></h5>")
         else:
             # clear the Info panel
             max_llm_rerank_score = max(
@@ -252,8 +252,8 @@ class FullQAPipeline(BaseReasoning):
                 yield Document(
                     channel="info",
                     content=(
-                        "<h5>WARNING! Context relevance score is low. "
-                        "Double check the model answer for correctness.</h5>"
+                        "<h5>PERINGATAN! Skor relevansi konteks rendah. "
+                        "Periksa kembali jawaban model untuk memastikan kebenaran.</h5>"
                     ),
                 )
 
@@ -266,7 +266,7 @@ class FullQAPipeline(BaseReasoning):
             if qa_score:
                 yield Document(
                     channel="info",
-                    content=f"<h5>Answer confidence: {qa_score}</h5>",
+                    content=f"<h5>Tingkat kepercayaan jawaban: {qa_score}</h5>",
                 )
 
             yield from with_citation
@@ -407,18 +407,18 @@ class FullQAPipeline(BaseReasoning):
 
         return {
             "llm": {
-                "name": "Language model",
+                "name": "Model bahasa",
                 "value": llm,
                 "component": "dropdown",
                 "choices": choices,
                 "special_type": "llm",
                 "info": (
-                    "The language model to use for generating the answer. If None, "
-                    "the application default language model will be used."
+                    "Model bahasa yang digunakan untuk menghasilkan jawaban. "
+                    "Jika tidak ada, model bahasa default aplikasi akan digunakan."
                 ),
             },
             "highlight_citation": {
-                "name": "Citation style",
+                "name": "Gaya kutipan",
                 "value": (
                     "highlight"
                     if not config("USE_LOW_LLM_REQUESTS", default=False, cast=bool)
@@ -426,47 +426,47 @@ class FullQAPipeline(BaseReasoning):
                 ),
                 "component": "radio",
                 "choices": [
-                    ("citation: highlight", "highlight"),
-                    ("citation: inline", "inline"),
-                    ("no citation", "off"),
+                    ("kutipan: sorot", "highlight"),
+                    ("kutipan: sebaris", "inline"),
+                    ("tanpa kutipan", "off"),
                 ],
             },
             "create_mindmap": {
-                "name": "Create Mindmap",
+                "name": "Buat Peta Pikiran",
                 "value": False,
                 "component": "checkbox",
             },
             "create_citation_viz": {
-                "name": "Create Embeddings Visualization",
+                "name": "Buat Visualisasi Embeddings",
                 "value": False,
                 "component": "checkbox",
             },
             "use_multimodal": {
-                "name": "Use Multimodal Input",
+                "name": "Gunakan Input Multimodal",
                 "value": False,
                 "component": "checkbox",
             },
             "system_prompt": {
-                "name": "System Prompt",
-                "value": ("This is a question answering system."),
+                "name": "Prompt Sistem",
+                "value": ("Ini adalah sistem tanya jawab."),
             },
             "qa_prompt": {
-                "name": "QA Prompt (contains {context}, {question}, {lang})",
+                "name": "Prompt QA (berisi {context}, {question}, {lang})",
                 "value": DEFAULT_QA_TEXT_PROMPT,
             },
             "n_last_interactions": {
-                "name": "Number of interactions to include",
+                "name": "Jumlah interaksi yang disertakan",
                 "value": 5,
                 "component": "number",
-                "info": "The maximum number of chat interactions to include in the LLM",
+                "info": "Jumlah maksimum interaksi chat yang disertakan dalam LLM",
             },
             "trigger_context": {
-                "name": "Maximum message length for context rewriting",
+                "name": "Panjang pesan maksimum untuk penulisan ulang konteks",
                 "value": 150,
                 "component": "number",
                 "info": (
-                    "The maximum length of the message to trigger context addition. "
-                    "Exceeding this length, the message will be used as is."
+                    "Panjang maksimum pesan untuk memicu penambahan konteks. "
+                    "Melebihi panjang ini, pesan akan digunakan apa adanya."
                 ),
             },
         }
@@ -475,11 +475,11 @@ class FullQAPipeline(BaseReasoning):
     def get_info(cls) -> dict:
         return {
             "id": "simple",
-            "name": "Simple QA",
+            "name": "QA Sederhana",
             "description": (
-                "Simple RAG-based question answering pipeline. This pipeline can "
-                "perform both keyword search and similarity search to retrieve the "
-                "context. After that it includes that context to generate the answer."
+                "Pipeline tanya jawab berbasis RAG sederhana. Pipeline ini dapat "
+                "melakukan pencarian kata kunci dan pencarian kemiripan untuk mengambil "
+                "konteks. Setelah itu, konteks tersebut disertakan untuk menghasilkan jawaban."
             ),
         }
 
@@ -492,9 +492,10 @@ class FullDecomposeQAPipeline(FullQAPipeline):
         for idx, message in enumerate(messages):
             yield Document(
                 channel="chat",
-                content=f"<br><b>Sub-question {idx + 1}</b>"
-                f"<br>{message}<br><b>Answer</b><br>",
+                content=f"<br><b>Sub-pertanyaan {idx + 1}</b>"
+                f"<br>{message}<br><b>Jawaban</b><br>",
             )
+            
             # should populate the context
             docs, infos = self.retrieve(message, history)
             print(f"Got {len(docs)} retrieved documents")
@@ -513,14 +514,12 @@ class FullDecomposeQAPipeline(FullQAPipeline):
             )
 
             output_str += (
-                f"Sub-question {idx + 1}-th: '{message}'\nAnswer: '{answer.text}'\n\n"
+                f"Sub-pertanyaan ke-{idx + 1}: '{message}'\nJawaban: '{answer.text}'\n\n"
             )
 
         return output_str
 
-    def stream(  # type: ignore
-        self, message: str, conv_id: str, history: list, **kwargs  # type: ignore
-    ) -> Generator[Document, None, Document]:
+    def stream(self, message: str, conv_id: str, history: list, **kwargs) -> Generator[Document, None, Document]:
         sub_question_answer_output = ""
         if self.rewrite_pipeline:
             print("Chosen rewrite pipeline", self.rewrite_pipeline)
@@ -535,7 +534,7 @@ class FullDecomposeQAPipeline(FullQAPipeline):
             ):
                 yield Document(
                     channel="chat",
-                    content="<h4>Sub questions and their answers</h4>",
+                    content="<h4>Sub-pertanyaan dan jawabannya</h4>",
                 )
                 sub_question_answer_output = yield from self.answer_sub_questions(
                     [r.text for r in result], conv_id, history, **kwargs
@@ -543,7 +542,7 @@ class FullDecomposeQAPipeline(FullQAPipeline):
 
         yield Document(
             channel="chat",
-            content=f"<h4>Main question</h4>{message}<br><b>Answer</b><br>",
+            content=f"<h4>Pertanyaan utama</h4>{message}<br><b>Jawaban</b><br>",
         )
 
         # should populate the context
@@ -567,7 +566,7 @@ class FullDecomposeQAPipeline(FullQAPipeline):
             answer, docs
         )
         if not with_citation and not without_citation:
-            yield Document(channel="info", content="<h5><b>No evidence found.</b></h5>")
+            yield Document(channel="info", content="<h5><b>Tidak ada bukti yang ditemukan.</b></h5>")
         else:
             yield Document(channel="info", content=None)
             yield from with_citation
@@ -579,7 +578,7 @@ class FullDecomposeQAPipeline(FullQAPipeline):
     def get_user_settings(cls) -> dict:
         user_settings = super().get_user_settings()
         user_settings["decompose_prompt"] = {
-            "name": "Decompose Prompt",
+            "name": "Prompt Uraian",
             "value": DecomposeQuestionPipeline.DECOMPOSE_SYSTEM_PROMPT_TEMPLATE,
         }
         return user_settings
@@ -599,11 +598,12 @@ class FullDecomposeQAPipeline(FullQAPipeline):
     def get_info(cls) -> dict:
         return {
             "id": "complex",
-            "name": "Complex QA",
+            "name": "QA Kompleks",
             "description": (
-                "Use multi-step reasoning to decompose a complex question into "
-                "multiple sub-questions. This pipeline can "
-                "perform both keyword search and similarity search to retrieve the "
-                "context. After that it includes that context to generate the answer."
+                "Menggunakan penalaran multi-langkah untuk menguraikan pertanyaan kompleks "
+                "menjadi beberapa sub-pertanyaan. Pipeline ini dapat "
+                "melakukan pencarian kata kunci dan pencarian kemiripan untuk mengambil "
+                "konteks. Setelah itu, konteks tersebut disertakan untuk menghasilkan jawaban."
             ),
         }
+        
