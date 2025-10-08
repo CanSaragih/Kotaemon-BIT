@@ -75,10 +75,13 @@ def validate_token_with_sipadu(token):
         return False, {}, error_msg
 
 def main():
-    """Simplified main function - let Gradio handle token extraction"""
+    """Enhanced main function dengan session management"""
     print("="*60)
     print("🚀 SIPADU AI Tools (Kotaemon) - Starting")
     print("="*60)
+    
+    # ✅ NEW: Clear any existing session data
+    clear_existing_sessions()
     
     # Development mode check
     if os.getenv('KOTAEMON_DEV_MODE', '').lower() == 'true':
@@ -129,7 +132,33 @@ def main():
         traceback.print_exc()
         sys.exit(1)
 
-    # Debug function untuk check request
+def clear_existing_sessions():
+    """Clear any existing user sessions or cached data"""
+    print("🗑️ Clearing existing sessions and cached data...")
+    
+    try:
+        # Clear environment session variables
+        for key in ['SIPADU_AUTH_STATUS', 'SIPADU_USER_DATA', 'CURRENT_USER_ID']:
+            if key in os.environ:
+                del os.environ[key]
+        
+        # Clear any temporary session files if they exist
+        import tempfile
+        temp_dir = tempfile.gettempdir()
+        session_files = [f for f in os.listdir(temp_dir) if f.startswith('kotaemon_session_')]
+        for session_file in session_files:
+            try:
+                os.remove(os.path.join(temp_dir, session_file))
+                print(f"🗑️ Removed session file: {session_file}")
+            except:
+                pass
+                
+        print("✅ Session clearing completed")
+        
+    except Exception as e:
+        print(f"❌ Error clearing sessions: {e}")
+
+# Debug function untuk check request
 def debug_request():
     """Debug function to check what Gradio receives"""
     

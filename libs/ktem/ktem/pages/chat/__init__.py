@@ -3,6 +3,7 @@ import json
 import re
 from copy import deepcopy
 from typing import Optional
+import warnings
 
 import gradio as gr
 from decouple import config
@@ -824,7 +825,8 @@ class ChatPage(BasePage):
 
         def raise_error_on_state(state):
             if not state:
-                raise ValueError("Chat suggestion disabled")
+                gr.Info("Saran percakapan dinonaktikan")
+                return None
 
         self.chat_control.cb_suggest_chat.change(
             fn=toggle_chat_suggestion,

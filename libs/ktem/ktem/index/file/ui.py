@@ -355,105 +355,282 @@ class FileIndexPage(BasePage):
         )
 
         if self._app.f_user_management:
-            # ✅ ENHANCED: onSignIn event dengan immediate file loading
+            # ✅ ENHANCED: onSignIn event untuk load files dan groups
             self._app.subscribe_event(
                 name="onSignIn",
                 definition={
-                    "fn": self.reload_files_after_signin,
+                    "fn": self.enhanced_load_files_on_signin,
                     "inputs": [self._app.user_id],
-                    "outputs": [self.file_list_state, self.file_list],
+                    "outputs": [
+                        self.file_list_state, 
+                        self.file_list,
+                        self.group_list_state, 
+                        self.group_list,
+                        self.group_files
+                    ],
                     "show_progress": "hidden",
                 },
             )
-            self._app.subscribe_event(
-                name="onSignIn",
-                definition={
-                    "fn": self.list_group,
-                    "inputs": [self._app.user_id, self.file_list_state],
-                    "outputs": [self.group_list_state, self.group_list],
-                    "show_progress": "hidden",
-                },
-            )
-            self._app.subscribe_event(
-                name="onSignIn",
-                definition={
-                    "fn": self.list_file_names,
-                    "inputs": [self.file_list_state],
-                    "outputs": [self.group_files],
-                    "show_progress": "hidden",
-                },
-            )
+            
+            # ✅ ENHANCED: onSignOut event untuk clear files dan groups
             self._app.subscribe_event(
                 name="onSignOut",
                 definition={
-                    "fn": self.list_file,
-                    "inputs": [self._app.user_id],
-                    "outputs": [self.file_list_state, self.file_list],
+                    "fn": self.clear_files_on_signout,
+                    "outputs": [
+                        self.file_list_state, 
+                        self.file_list,
+                        self.group_list_state, 
+                        self.group_list,
+                        self.group_files
+                    ],
                     "show_progress": "hidden",
                 },
             )
 
-    def reload_files_after_signin(self, user_id):
-        """Enhanced function to reload files after sign-in - FIXED VERSION"""
-        print(f"📁 Reloading files after sign-in for user: {user_id}")
+    def _clear_cached_file_data(self):
+        """Enhanced clear cached file data dengan session info - FIXED VERSION"""
+        try:
+            print("🗑️ FORCE clearing cached file data...")
+            
+            # ✅ 1. Clear Gradio State values
+            if hasattr(self, 'file_list_state') and self.file_list_state:
+                self.file_list_state.value = []
+            if hasattr(self, 'group_list_state') and self.group_list_state:
+                self.group_list_state.value = []
+            
+            # ✅ 2. Clear internal caches
+            cache_attrs = ['_cached_file_data', '_cached_group_data', '_file_cache', '_group_cache']
+            for attr in cache_attrs:
+                if hasattr(self, attr):
+                    delattr(self, attr)
+            
+            # ✅ 3. Clear any database connection pools yang mungkin cache data
+            try:
+                # Force close any cached database connections
+                from ktem.db.engine import engine
+                if hasattr(engine, 'dispose'):
+                    engine.dispose()
+            except Exception as e:
+                print(f"Could not dispose engine: {e}")
+                
+            print("🗑️ Enhanced cached file data clearing completed")
+        except Exception as e:
+            print(f"❌ Error in enhanced cached file data clearing: {e}")
+
+    def enhanced_load_files_on_signin(self, user_id):
+        """Enhanced function untuk load files dan groups setelah sign-in - COMPREHENSIVE REWRITE"""
+        print(f"🔄 COMPREHENSIVE loading files for user: {user_id}")
         
         if not user_id:
-            print("❌ No user_id provided for file reload")
-            return [], gr.update()
+            print("❌ No user_id provided to enhanced_load_files_on_signin")
+            return self._get_empty_file_data()
         
         try:
-            # ✅ ENHANCED: Load files immediately after authentication
-            file_list_state, file_list_df = self.list_file(user_id, "")
-            print(f"📚 Loaded {len(file_list_state)} files for user {user_id}")
+            # ✅ CRITICAL: Force clear ALL cached data first
+            self._clear_cached_file_data()
             
+            # ✅ ENHANCED: Add delay untuk ensure database consistency
+            import time
+            time.sleep(0.2)
+            
+            # ✅ CRITICAL: Validate session consistency
+            current_user_env = os.getenv('CURRENT_USER_ID', '')
+            expected_user_env = f"sipadu_{user_id}"
+            
+            if current_user_env != expected_user_env:
+                print(f"⚠️ Session mismatch detected! Env: {current_user_env}, Expected: {expected_user_env}")
+                print("🗑️ Additional cache clearing for session mismatch")
+                self._clear_cached_file_data()
+                os.environ['CURRENT_USER_ID'] = expected_user_env
+            
+            # ✅ ENHANCED: Force database reload dengan fresh session
+            with Session(engine) as fresh_session:
+                # Force reload files for specific user dengan fresh query
+                Source = self._index._resources["Source"]
+                statement = select(Source)
+                if self._index.config.get("private", False):
+                    statement = statement.where(Source.user == user_id)
+                
+                fresh_results = fresh_session.execute(statement).all()
+                file_list_state = [
+                    {
+                        "id": each[0].id,
+                        "name": each[0].name,
+                        "size": self.format_size_human_readable(each[0].size),
+                        "tokens": self.format_size_human_readable(
+                            each[0].note.get("tokens", "-"), suffix=""
+                        ),
+                        "loader": each[0].note.get("loader", "-"),
+                        "date_created": each[0].date_created.strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    for each in fresh_results
+                ]
+                
+                if file_list_state:
+                    file_list_df = pd.DataFrame.from_records(file_list_state)
+                else:
+                    file_list_df = pd.DataFrame.from_records([{
+                        "id": "-", "name": "-", "size": "-", "tokens": "-",
+                        "loader": "-", "date_created": "-",
+                    }])
+                
+                print(f"📁 FRESH LOADED {len(file_list_state)} files for user {user_id}")
+                
+                # ✅ ENHANCED: Force reload groups dengan fresh session
+                FileGroup = self._index._resources["FileGroup"]
+                group_statement = select(FileGroup)
+                if self._index.config.get("private", False):
+                    group_statement = group_statement.where(FileGroup.user == user_id)
+                
+                group_results = fresh_session.execute(group_statement).all()
+                group_list_state = [
+                    {
+                        "id": each[0].id,
+                        "name": each[0].name,
+                        "files": each[0].data.get("files", []),
+                        "date_created": each[0].date_created.strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    for each in group_results
+                ]
+                
+                if group_list_state:
+                    # Format group data for display
+                    file_id_to_name = {item["id"]: item["name"] for item in file_list_state}
+                    formatted_groups = deepcopy(group_list_state)
+                    for item in formatted_groups:
+                        file_names = [
+                            file_id_to_name.get(file_id, "-") for file_id in item["files"]
+                        ]
+                        item["files"] = ", ".join(
+                            f"'{it[:MAX_FILENAME_LENGTH]}..'"
+                            if len(it) > MAX_FILENAME_LENGTH
+                            else f"'{it}'"
+                            for it in file_names
+                        )
+                        item_count = len(file_names)
+                        item_postfix = "s" if item_count > 1 else ""
+                        item["files"] = f"[{item_count} item{item_postfix}] " + item["files"]
+                    
+                    group_list_df = pd.DataFrame.from_records(formatted_groups)
+                else:
+                    group_list_df = pd.DataFrame.from_records([{
+                        "id": "-", "name": "-", "files": "-", "date_created": "-",
+                    }])
+                
+                print(f"📂 FRESH LOADED {len(group_list_state)} groups for user {user_id}")
+            
+            # ✅ ENHANCED: Load file names for dropdown
             if file_list_state:
-                print(f"✅ Files loaded successfully: {[f['name'] for f in file_list_state[:3]]}...")
+                file_names = [(item["name"], item["id"]) for item in file_list_state]
             else:
-                print("📝 No files found for user")
-                
-            return file_list_state, file_list_df
-                
+                file_names = []
+            file_names_update = gr.update(choices=file_names)
+            print(f"📝 FRESH UPDATED file names dropdown with {len(file_names)} files")
+            
+            return file_list_state, file_list_df, group_list_state, group_list_df, file_names_update
+            
         except Exception as e:
-            print(f"❌ Error reloading files: {e}")
-            return [], gr.update()
+            print(f"❌ Error in enhanced_load_files_on_signin for user {user_id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return self._get_empty_file_data()
+
+    def _get_empty_file_data(self):
+        """Get empty file data structure"""
+        empty_df = pd.DataFrame.from_records([{
+            "id": "-", "name": "-", "size": "-", "tokens": "-",
+            "loader": "-", "date_created": "-",
+        }])
+        
+        empty_group_df = pd.DataFrame.from_records([{
+            "id": "-", "name": "-", "files": "-", "date_created": "-",
+        }])
+        
+        return [], empty_df, [], empty_group_df, gr.update(choices=[])
+
+    def clear_files_on_signout(self):
+        """Clear files dan groups setelah sign-out - ENHANCED"""
+        print("🗑️ Clearing files and groups on sign-out")
+        
+        # Clear internal cached data
+        self._clear_cached_file_data()
+        
+        return self._get_empty_file_data()
 
     def _on_app_created(self):
-        """Called when the app is created - ENHANCED VERSION"""
+        """Called when the app is created - ENHANCED VERSION dengan session change detection"""
         if KH_DEMO_MODE:
             return
 
-        # ✅ ENHANCED: Load files with proper error handling and timing
-        def safe_load_files_on_startup(user_id):
-            print(f"📁 safe_load_files_on_startup called with user_id: {user_id}")
+        # ✅ ENHANCED: Load files dengan session validation dan change detection
+        def safe_load_all_data_with_session_check(user_id):
+            print(f"🔄 safe_load_all_data_with_session_check called with user_id: {user_id}")
+            
+            # ✅ NEW: Validate session consistency
+            current_session_user = os.getenv('CURRENT_USER_ID', '')
+            if user_id and current_session_user and f"sipadu_{user_id}" != current_session_user and current_session_user.startswith('sipadu_'):
+                print(f"⚠️ User ID mismatch detected! Current: {current_session_user}, Requested: sipadu_{user_id}")
+                print("🗑️ Clearing cached data due to session mismatch")
+                self._clear_cached_file_data()
             
             if not user_id:
-                print("❌ No user_id provided to safe_load_files_on_startup")
-                return [], gr.update(), [], gr.update()
+                print("❌ No user_id provided to safe_load_all_data_with_session_check - returning empty data")
+                return self._get_empty_file_data()
             
             try:
-                # Load files
+                # ✅ NEW: Clear any cached data first untuk ensure fresh load
+                self._clear_cached_file_data()
+                
+                # Load files for specific user
                 file_list_state, file_list_df = self.list_file(user_id, "")
-                print(f"📚 Startup: Loaded {len(file_list_state)} files")
+                print(f"📁 Session-safe load: Loaded {len(file_list_state)} files for user {user_id}")
                 
-                # Load groups
+                # Load groups for specific user
                 group_list_state, group_list_df = self.list_group(user_id, file_list_state)
-                print(f"📚 Startup: Loaded {len(group_list_state)} groups")
+                print(f"📂 Session-safe load: Loaded {len(group_list_state)} groups for user {user_id}")
                 
-                return file_list_state, file_list_df, group_list_state, group_list_df
-                    
+                # Load file names for dropdown
+                file_names_update = self.list_file_names(file_list_state)
+                print(f"📝 Session-safe load: Updated file names dropdown for user {user_id}")
+                
+                return file_list_state, file_list_df, group_list_state, group_list_df, file_names_update
+                
             except Exception as e:
-                print(f"❌ Error in safe_load_files_on_startup: {e}")
-                return [], gr.update(), [], gr.update()
+                print(f"❌ Error in safe_load_all_data_with_session_check for user {user_id}: {e}")
+                return self._get_empty_file_data()
+
+        def _clear_cached_file_data_enhanced(self):
+            """Enhanced clear cached file data dengan session info"""
+            try:
+                if hasattr(self, 'file_list_state'):
+                    self.file_list_state.value = []
+                if hasattr(self, 'group_list_state'):
+                    self.group_list_state.value = []
+                
+                # ✅ NEW: Clear any internal caches
+                if hasattr(self, '_cached_file_data'):
+                    delattr(self, '_cached_file_data')
+                if hasattr(self, '_cached_group_data'):
+                    delattr(self, '_cached_group_data')
+                    
+                print("🗑️ Enhanced cached file data clearing completed")
+            except Exception as e:
+                print(f"❌ Error in enhanced cached file data clearing: {e}")
+
+        # Replace the method with enhanced version
+        self._clear_cached_file_data = lambda: _clear_cached_file_data_enhanced(self)
 
         self._app.app.load(
-            safe_load_files_on_startup,
+            safe_load_all_data_with_session_check,
             inputs=[self._app.user_id],
-            outputs=[self.file_list_state, self.file_list, self.group_list_state, self.group_list],
-            show_progress="hidden"
-        ).then(
-            self.list_file_names,
-            inputs=[self.file_list_state],
-            outputs=[self.group_files],
+            outputs=[
+                self.file_list_state,
+                self.file_list,
+                self.group_list_state,
+                self.group_list,
+                self.group_files
+            ],
             show_progress="hidden"
         )
 
@@ -1415,6 +1592,7 @@ class FileIndexPage(BasePage):
         return f"{num:.0f}Yi{suffix}"
 
     def list_file(self, user_id, name_pattern=""):
+        """List files untuk user dengan fresh database query - ENHANCED"""
         if user_id is None:
             # not signed in
             return [], pd.DataFrame.from_records(
@@ -1430,26 +1608,41 @@ class FileIndexPage(BasePage):
                 ]
             )
 
+        print(f"🔄 list_file called for user: {user_id}, pattern: '{name_pattern}'")
+        
         Source = self._index._resources["Source"]
-        with Session(engine) as session:
-            statement = select(Source)
-            if self._index.config.get("private", False):
-                statement = statement.where(Source.user == user_id)
-            if name_pattern:
-                statement = statement.where(Source.name.ilike(f"%{name_pattern}%"))
-            results = [
-                {
-                    "id": each[0].id,
-                    "name": each[0].name,
-                    "size": self.format_size_human_readable(each[0].size),
-                    "tokens": self.format_size_human_readable(
-                        each[0].note.get("tokens", "-"), suffix=""
-                    ),
-                    "loader": each[0].note.get("loader", "-"),
-                    "date_created": each[0].date_created.strftime("%Y-%m-%d %H:%M:%S"),
-                }
-                for each in session.execute(statement).all()
-            ]
+        
+        # ✅ CRITICAL: Use fresh session untuk avoid cache issues
+        with Session(engine) as fresh_session:
+            try:
+                statement = select(Source)
+                if self._index.config.get("private", False):
+                    statement = statement.where(Source.user == user_id)
+                if name_pattern:
+                    statement = statement.where(Source.name.ilike(f"%{name_pattern}%"))
+                
+                # ✅ CRITICAL: Execute fresh query
+                query_results = fresh_session.execute(statement).all()
+                
+                results = [
+                    {
+                        "id": each[0].id,
+                        "name": each[0].name,
+                        "size": self.format_size_human_readable(each[0].size),
+                        "tokens": self.format_size_human_readable(
+                            each[0].note.get("tokens", "-"), suffix=""
+                        ),
+                        "loader": each[0].note.get("loader", "-"),
+                        "date_created": each[0].date_created.strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    for each in query_results
+                ]
+                
+                print(f"📁 FRESH QUERY: Found {len(results)} files for user {user_id}")
+                
+            except Exception as e:
+                print(f"❌ Error in fresh file query: {e}")
+                results = []
 
         if results:
             file_list = pd.DataFrame.from_records(results)
@@ -1469,15 +1662,8 @@ class FileIndexPage(BasePage):
 
         return results, file_list
 
-    def list_file_names(self, file_list_state):
-        if file_list_state:
-            file_names = [(item["name"], item["id"]) for item in file_list_state]
-        else:
-            file_names = []
-
-        return gr.update(choices=file_names)
-
     def list_group(self, user_id, file_list):
+        """List groups untuk user dengan fresh database query - ENHANCED"""
         # supply file_list to display the file names in the group
         if file_list:
             file_id_to_name = {item["id"]: item["name"] for item in file_list}
@@ -1496,22 +1682,36 @@ class FileIndexPage(BasePage):
                     }
                 ]
             )
+        
+        print(f"🔄 list_group called for user: {user_id}")
 
         FileGroup = self._index._resources["FileGroup"]
-        with Session(engine) as session:
-            statement = select(FileGroup)
-            if self._index.config.get("private", False):
-                statement = statement.where(FileGroup.user == user_id)
+        
+        # ✅ CRITICAL: Use fresh session untuk avoid cache issues
+        with Session(engine) as fresh_session:
+            try:
+                statement = select(FileGroup)
+                if self._index.config.get("private", False):
+                    statement = statement.where(FileGroup.user == user_id)
 
-            results = [
-                {
-                    "id": each[0].id,
-                    "name": each[0].name,
-                    "files": each[0].data.get("files", []),
-                    "date_created": each[0].date_created.strftime("%Y-%m-%d %H:%M:%S"),
-                }
-                for each in session.execute(statement).all()
-            ]
+                # ✅ CRITICAL: Execute fresh query
+                query_results = fresh_session.execute(statement).all()
+                
+                results = [
+                    {
+                        "id": each[0].id,
+                        "name": each[0].name,
+                        "files": each[0].data.get("files", []),
+                        "date_created": each[0].date_created.strftime("%Y-%m-%d %H:%M:%S"),
+                    }
+                    for each in query_results
+                ]
+                
+                print(f"📂 FRESH QUERY: Found {len(results)} groups for user {user_id}")
+                
+            except Exception as e:
+                print(f"❌ Error in fresh group query: {e}")
+                results = []
 
         if results:
             formated_results = deepcopy(results)
@@ -1676,6 +1876,15 @@ class FileIndexPage(BasePage):
                 errors.append(f"URL tidak valid `{url}`")
         return errors
 
+    def list_file_names(self, file_list_state):
+        """Get file names for dropdown from file list state"""
+        if file_list_state:
+            file_names = [(item["name"], item["id"]) for item in file_list_state]
+        else:
+            file_names = []
+
+        return gr.update(choices=file_names)
+
 
 class FileSelector(BasePage):
     """File selector UI in the Chat page"""
@@ -1802,13 +2011,32 @@ class FileSelector(BasePage):
         return gr.update(value=selected_files, choices=options), options
 
     def _on_app_created(self):
+        """Enhanced app creation dengan proper file loading"""
+        # ✅ ENHANCED: Load files with user context
+        def safe_load_files_with_context(user_id):
+            print(f"🔄 safe_load_files_with_context called with user_id: {user_id}")
+            
+            if not user_id:
+                print("❌ No user_id provided for file selector")
+                return gr.update(value=[], choices=[]), []
+            
+            try:
+                options, choices = self.load_files([], user_id)
+                print(f"📁 File selector: Loaded {len(choices)} file options")
+                return options, choices
+            except Exception as e:
+                print(f"❌ Error in safe_load_files_with_context: {e}")
+                return gr.update(value=[], choices=[]), []
+
         self._app.app.load(
-            self.load_files,
-            inputs=[self.selector, self._app.user_id],
+            safe_load_files_with_context,
+            inputs=[self._app.user_id],
             outputs=[self.selector, self.selector_choices],
+            show_progress="hidden"
         )
 
     def on_subscribe_public_events(self):
+        """Enhanced public events subscription"""
         self._app.subscribe_event(
             name=f"onFileIndex{self._index.id}Changed",
             definition={
@@ -1818,54 +2046,19 @@ class FileSelector(BasePage):
                 "show_progress": "hidden",
             },
         )
+        
         if self._app.f_user_management:
-            # ✅ ENHANCED: onSignIn dan onSignOut events untuk file selector
+            # ✅ ENHANCED: Better file loading on sign in/out
             for event_name in ["onSignIn", "onSignOut"]:
                 self._app.subscribe_event(
                     name=event_name,
                     definition={
-                        "fn": self.reload_files_for_selector,
+                        "fn": lambda selected_files, user_id: self.load_files(
+                            [] if event_name == "onSignOut" else selected_files, 
+                            user_id if event_name == "onSignIn" else None
+                        ),
                         "inputs": [self.selector, self._app.user_id],
                         "outputs": [self.selector, self.selector_choices],
                         "show_progress": "hidden",
                     },
                 )
-
-    def reload_files_for_selector(self, selected_files, user_id):
-        """Enhanced file loading for selector after authentication"""
-        print(f"📁 Reloading files for selector, user: {user_id}")
-        
-        if not user_id:
-            print("❌ No user_id for selector file reload")
-            return gr.update(choices=[], value=[]), []
-        
-        try:
-            selector_update, choices = self.load_files(selected_files, user_id)
-            print(f"📚 Selector: Loaded {len(choices)} file choices")
-            return selector_update, choices
-        except Exception as e:
-            print(f"❌ Error reloading files for selector: {e}")
-            return gr.update(choices=[], value=[]), []
-
-    def _on_app_created(self):
-        # ✅ ENHANCED: Load files on app startup with better error handling
-        def safe_load_selector_files(user_id):
-            print(f"📁 Loading selector files on startup for user: {user_id}")
-            
-            if not user_id:
-                return gr.update(choices=[], value=[]), []
-            
-            try:
-                selector_update, choices = self.load_files([], user_id)
-                print(f"📚 Startup selector: Loaded {len(choices)} choices")
-                return selector_update, choices
-            except Exception as e:
-                print(f"❌ Error loading selector files on startup: {e}")
-                return gr.update(choices=[], value=[]), []
-
-        self._app.app.load(
-            safe_load_selector_files,
-            inputs=[self._app.user_id],
-            outputs=[self.selector, self.selector_choices],
-            show_progress="hidden"
-        )

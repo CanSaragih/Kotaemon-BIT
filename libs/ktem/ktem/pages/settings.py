@@ -211,9 +211,11 @@ class SettingsPage(BasePage):
                 outputs=[self.password_change, self.password_change_confirm],
                 show_progress="hidden",
             )
+            
+            # ✅ ENHANCED: Logout dengan proper session clearing dan SIPADU redirect
             onSignOutClick = self.signout.click(
-                lambda: (None, "Current user: ___", "", ""),
-                inputs=[],
+                self.enhanced_logout_handler,
+                inputs=[self._user_id],
                 outputs=[
                     self._user_id,
                     self.current_name,
@@ -223,11 +225,60 @@ class SettingsPage(BasePage):
                 show_progress="hidden",
                 js=signout_js,
             ).then(
+                # Reset all settings to default after logout
                 self.load_setting,
                 inputs=self._user_id,
                 outputs=[self._settings_state] + self.components(),
                 show_progress="hidden",
+            ).then(
+                # Redirect to login tab dengan auto-refresh
+                lambda: [
+                    gr.update(selected="login-tab"),
+                    gr.update(visible=True),   # Login tab visible
+                    gr.update(visible=False),  # Chat tab hidden
+                    gr.update(visible=False),  # Other tabs hidden
+                ],
+                outputs=[
+                    self._app.tabs,
+                    self._app._tabs["login-tab"],
+                    self._app._tabs["chat-tab"],
+                    self._app._tabs.get("indices-tab", gr.update()),
+                ],
+                show_progress="hidden"
+            ).then(
+                # ✅ NEW: JavaScript redirect ke SIPADU setelah logout
+                fn=lambda: None,
+                js="""
+                function() {
+                    console.log('🚪 Logout complete, redirecting to SIPADU...');
+                    
+                    // Get SIPADU URL from config
+                    let sipaduUrl = 'http://localhost.sipadubapelitbangbogor/home';
+                    if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.HOME_URL) {
+                        sipaduUrl = window.SIPADU_CONFIG.HOME_URL;
+                    } else if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.API_BASE) {
+                        sipaduUrl = window.SIPADU_CONFIG.API_BASE + '/home';
+                    }
+                    
+                    // Show notification
+                    if (window.showSipaduNotification) {
+                        window.showSipaduNotification('Logout berhasil. Mengarahkan ke SIPADU...', 'success');
+                    }
+                    
+                    // Clear any localStorage
+                    localStorage.removeItem('kotaemon_user_session');
+                    localStorage.removeItem('current_user_id');
+                    
+                    // Redirect after short delay
+                    setTimeout(() => {
+                        console.log('🚀 Redirecting to SIPADU:', sipaduUrl);
+                        window.location.href = sipaduUrl;
+                    }, 1500);
+                }
+                """,
             )
+            
+            # Trigger onSignOut events untuk semua komponen
             for event in self._app.get_event("onSignOut"):
                 onSignOutClick = onSignOutClick.then(**event)
 
@@ -240,7 +291,8 @@ class SettingsPage(BasePage):
 
             self.sso_signout = grlogin.LogoutButton("Logout")
         else:
-            self.signout = gr.Button("Logout")
+            # ✅ ENHANCED: Proper logout button dengan SIPADU integration
+            self.signout = gr.Button("🚪 Logout & Kembali ke SIPADU", variant="stop", size="lg")
 
             self.password_change = gr.Textbox(
                 label="New password", interactive=True, type="password"
@@ -249,6 +301,99 @@ class SettingsPage(BasePage):
                 label="Confirm password", interactive=True, type="password"
             )
             self.password_change_btn = gr.Button("Change password", interactive=True)
+
+    # ✅ NEW: Enhanced logout handler dengan proper session clearing
+    def enhanced_logout_handler(self, user_id):
+        """Enhanced logout handler yang clear session dan redirect ke SIPADU"""
+        import os
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        logger.info(f"🚪 Enhanced logout initiated for user: {user_id}")
+        
+        try:
+            # ✅ NEW: Clear file manager FIRST sebelum clear user data
+            self._clear_file_manager_on_logout()
+            
+            # Clear user session dari semua komponen
+            self._clear_all_user_data(user_id)
+            
+            # Clear environment variables
+            for key in ['SIPADU_AUTH_STATUS', 'SIPADU_USER_DATA', 'CURRENT_USER_ID', 'CURRENT_SESSION_TOKEN']:
+                if key in os.environ:
+                    del os.environ[key]
+                    
+            logger.info("✅ All user data and session cleared successfully")
+            
+            # Return values untuk clear UI components
+            return None, "Current user: ___", "", ""
+            
+        except Exception as e:
+            logger.exception(f"❌ Error during enhanced logout: {e}")
+            return None, "Current user: ___", "", ""
+    
+    def _clear_file_manager_on_logout(self):
+        """Clear file manager khusus untuk logout"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            logger.info("🗑️ Clearing file manager on logout...")
+            
+            # Clear file manager untuk semua indices
+            if hasattr(self._app, 'index_manager') and self._app.index_manager.indices:
+                for index in self._app.index_manager.indices:
+                    if hasattr(index, 'file_index_page'):
+                        file_page = index.file_index_page
+                        
+                        # Clear gradio states
+                        if hasattr(file_page, 'file_list_state'):
+                            file_page.file_list_state.value = []
+                        if hasattr(file_page, 'group_list_state'):
+                            file_page.group_list_state.value = []
+                        if hasattr(file_page, 'group_files'):
+                            file_page.group_files.choices = []
+                        
+                        # Clear cached data
+                        if hasattr(file_page, '_clear_cached_file_data'):
+                            file_page._clear_cached_file_data()
+                            
+                        logger.info(f"🗑️ Cleared file manager for index {index.id} on logout")
+                        
+                logger.info("✅ File manager cleared successfully on logout")
+            else:
+                logger.warning("❌ No index manager found during logout")
+                
+        except Exception as e:
+            logger.exception(f"❌ Error clearing file manager on logout: {e}")
+    
+    def _clear_all_user_data(self, user_id):
+        """Clear semua data user dari memory dan cache"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # Clear file data dari semua indices (sudah di-handle di _clear_file_manager_on_logout)
+            
+            # Clear chat conversations
+            if hasattr(self._app, 'chat_page') and hasattr(self._app.chat_page, 'chat_control'):
+                chat_control = self._app.chat_page.chat_control
+                if hasattr(chat_control, 'conversation'):
+                    chat_control.conversation.value = None
+                    chat_control.conversation.choices = []
+                logger.info("🗑️ Cleared chat conversations")
+                
+            # Clear any cached settings
+            if hasattr(self._app, 'settings_state'):
+                # Reset to default settings
+                default_settings = self._app.default_settings.flatten()
+                self._app.settings_state.value = default_settings
+                logger.info("🗑️ Reset settings to default")
+                
+            logger.info(f"✅ All user data cleared for user: {user_id}")
+            
+        except Exception as e:
+            logger.exception(f"❌ Error clearing user data: {e}")
 
     def change_password(self, user_id, password, password_confirm):
         from ktem.pages.resources.user import validate_password

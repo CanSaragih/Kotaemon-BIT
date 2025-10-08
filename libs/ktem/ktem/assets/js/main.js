@@ -1,4 +1,86 @@
 function run() {
+  // ✅ ENHANCED: Force clear any cached data including user session detection
+  const clearAllCacheData = () => {
+    console.log("🗑️ FORCE clearing all cache data...");
+
+    // Clear localStorage
+    const keysToRemove = [
+      "kotaemon_user_session",
+      "current_user_id",
+      "chat_history",
+      "file_cache",
+      "user_settings",
+      "current_session_token",
+      "kotaemon_tabs_cache",
+      "user_data_cache",
+      "file_list_cache",
+      "conversation_cache",
+    ];
+
+    keysToRemove.forEach((key) => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        console.log(`🗑️ Removed localStorage: ${key}`);
+      }
+    });
+
+    // Clear sessionStorage
+    sessionStorage.clear();
+    console.log("🗑️ Cleared all sessionStorage");
+
+    // Clear any IndexedDB
+    if (window.indexedDB) {
+      const databaseNames = ["kotaemon", "gradio", "user_data"];
+      databaseNames.forEach((dbName) => {
+        try {
+          const deleteReq = indexedDB.deleteDatabase(dbName);
+          deleteReq.onsuccess = () =>
+            console.log(`🗑️ Deleted database: ${dbName}`);
+        } catch (e) {
+          // Ignore errors
+        }
+      });
+    }
+
+    console.log("✅ All cache data cleared");
+  };
+
+  // ✅ NEW: Detect user session changes
+  const detectUserSessionChange = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentToken = urlParams.get("token");
+    const storedToken = localStorage.getItem("current_session_token");
+
+    if (currentToken && storedToken && currentToken !== storedToken) {
+      console.log("🔄 USER SESSION CHANGE DETECTED!");
+      console.log(`Previous token: ${storedToken.substring(0, 20)}...`);
+      console.log(`New token: ${currentToken.substring(0, 20)}...`);
+
+      // Clear all cached data immediately
+      clearAllCacheData();
+
+      // Store new token
+      localStorage.setItem("current_session_token", currentToken);
+
+      return true;
+    }
+
+    if (currentToken && !storedToken) {
+      localStorage.setItem("current_session_token", currentToken);
+    }
+
+    return false;
+  };
+
+  // Check for user session change FIRST
+  const userSessionChanged = detectUserSessionChange();
+  if (userSessionChanged) {
+    console.log("🔄 User session changed - forcing app reload...");
+  }
+
+  // Clear cache data on load
+  clearAllCacheData();
+
   // Create modern preloader IMMEDIATELY - no delay
   const modernPreloader = document.createElement("div");
   modernPreloader.className = "modern-preloader";
@@ -74,8 +156,36 @@ function run() {
           gradioContainer.style.opacity = "1";
           gradioContainer.style.visibility = "visible";
         }
+
+        // ✅ NEW: Force refresh tab navigation after load
+        refreshTabNavigation();
       }, 500);
     }, 200);
+  }
+
+  // ✅ NEW: Function to refresh tab navigation
+  function refreshTabNavigation() {
+    console.log("🔄 Refreshing tab navigation...");
+
+    // Force re-render of tab navigation
+    const tabNav = document.querySelector(".tab-nav");
+    if (tabNav) {
+      // Trigger a reflow to force re-rendering
+      tabNav.style.display = "none";
+      tabNav.offsetHeight; // Force reflow
+      tabNav.style.display = "";
+
+      console.log("✅ Tab navigation refreshed");
+    }
+
+    // Also trigger any Gradio refresh events
+    if (window.gradio_config && window.gradio_config.refresh) {
+      try {
+        window.gradio_config.refresh();
+      } catch (e) {
+        console.log("Could not trigger Gradio refresh:", e);
+      }
+    }
   }
 
   // Optimized timing for better UX
@@ -159,15 +269,15 @@ function run() {
     modal.innerHTML = `
       <div class="sipadu-confirm-header">
         <div class="sipadu-confirm-icon">🏠</div>
-        <h3>Kembali ke Dashboard SIPADU</h3>
+        <h3>Keluar ke Dashboard SIPADU</h3>
       </div>
       <div class="sipadu-confirm-body">
-        <p>Anda akan keluar dari AI Tools dan menuju ke Dashboard SIPADU.</p>
-        <p>Silakan tekan Lanjutkan untuk melanjutkan.</p>
+        <p><strong>Anda akan keluar dari AI Tools dan menuju ke Dashboard SIPADU.</strong></p>
+        <p>Silakan tekan <strong>Logout & Keluar</strong> untuk melanjutkan.</p>
       </div>
       <div class="sipadu-confirm-actions">
         <button class="sipadu-btn-cancel">Batal</button>
-        <button class="sipadu-btn-confirm">Lanjutkan</button>
+        <button class="sipadu-btn-confirm">🚪 Logout & Keluar</button>
       </div>
     `;
 
@@ -189,55 +299,9 @@ function run() {
 
     confirmBtn.addEventListener("click", () => {
       closeSipaduConfirmation(overlay);
-      // Show loading notification
-      showSipaduNotification("Mengarahkan ke Dashboard SIPADU...", "info");
 
-      // Get SIPADU URL from environment-based config with multiple fallbacks
-      let sipaduUrl = "http://localhost.sipadubapelitbangbogor/home"; // Default fallback
-
-      // Priority 1: Window SIPADU_CONFIG from server environment
-      if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.HOME_URL) {
-        sipaduUrl = window.SIPADU_CONFIG.HOME_URL;
-        console.log("🏠 Using SIPADU URL from server config:", sipaduUrl);
-      }
-      // Priority 2: Window SIPADU_CONFIG API_BASE (construct home URL)
-      else if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.API_BASE) {
-        sipaduUrl = window.SIPADU_CONFIG.API_BASE + "/home";
-        console.log("🏠 Using SIPADU URL from API_BASE:", sipaduUrl);
-      }
-      // Priority 3: Try to get from localStorage (if previously stored)
-      else if (localStorage.getItem("sipadu_base_url")) {
-        sipaduUrl = localStorage.getItem("sipadu_base_url") + "/home";
-        console.log("🏠 Using SIPADU URL from localStorage:", sipaduUrl);
-      } else {
-        console.log("🏠 Using default SIPADU URL:", sipaduUrl);
-      }
-
-      console.log("🏠 Final redirect URL:", sipaduUrl);
-
-      // Redirect after short delay
-      setTimeout(() => {
-        try {
-          // Store the base URL for future use
-          if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.API_BASE) {
-            localStorage.setItem(
-              "sipadu_base_url",
-              window.SIPADU_CONFIG.API_BASE
-            );
-          }
-
-          console.log("🚀 Redirecting to:", sipaduUrl);
-          window.location.href = sipaduUrl;
-        } catch (error) {
-          console.error("❌ Redirect failed:", error);
-          showSipaduNotification(
-            "Gagal mengarahkan ke SIPADU. Silakan buka manual.",
-            "error"
-          );
-          // Fallback: open in new tab
-          window.open(sipaduUrl, "_blank");
-        }
-      }, 800);
+      // ✅ ENHANCED: Perform proper logout sebelum redirect
+      performProperLogout();
     });
 
     // Close on overlay click
@@ -257,25 +321,260 @@ function run() {
     document.addEventListener("keydown", handleEscape);
   }
 
+  // ✅ NEW: Close confirmation modal function
   function closeSipaduConfirmation(overlay) {
-    overlay.classList.remove("sipadu-confirm-show");
-    setTimeout(() => {
-      if (overlay.parentNode) {
+    console.log("🔒 Closing SIPADU confirmation modal");
+    try {
+      overlay.classList.remove("sipadu-confirm-show");
+      setTimeout(() => {
+        if (overlay && overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 300);
+    } catch (error) {
+      console.error("❌ Error closing confirmation modal:", error);
+      // Force remove if animation fails
+      if (overlay && overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
       }
-    }, 300);
+    }
   }
 
-  // Modern notification system (integrates with Gradio's notification)
-  function showSipaduNotification(message, type = "info") {
-    // Try to use Gradio's notification system if available
-    if (window.gradio && window.gradio.client) {
-      // Use Gradio's built-in notification
-      console.log(`🔔 ${type.toUpperCase()}: ${message}`);
-      return;
+  // ✅ NEW: Perform proper logout dengan session clearing
+  function performProperLogout() {
+    console.log("🚪 Starting proper logout process...");
+
+    // Show logout notification
+    showSipaduNotification("Melakukan logout...", "info");
+
+    try {
+      // ✅ 1. Clear all localStorage
+      const keysToRemove = [
+        "kotaemon_user_session",
+        "current_user_id",
+        "chat_history",
+        "file_cache",
+        "user_settings",
+        "current_session_token",
+      ];
+
+      keysToRemove.forEach((key) => {
+        localStorage.removeItem(key);
+        console.log(`🗑️ Cleared localStorage: ${key}`);
+      });
+
+      // ✅ 2. Clear sessionStorage
+      sessionStorage.clear();
+      console.log("🗑️ Cleared all sessionStorage");
+
+      // ✅ 3. Try to trigger Gradio logout if logout button exists
+      const logoutSelectors = [
+        'button[contains(text(), "Logout")]',
+        'button[contains(text(), "🚪")]',
+        'button[class*="logout"]',
+        "#signout",
+        ".logout-btn",
+        '[data-testid*="logout"]',
+      ];
+
+      let logoutButton = null;
+      for (const selector of logoutSelectors) {
+        try {
+          // For contains() selector, use XPath
+          if (selector.includes("contains")) {
+            const xpath = selector
+              .replace(
+                'button[contains(text(), "',
+                '//button[contains(text(), "'
+              )
+              .replace('")]', '")]');
+            const result = document.evaluate(
+              xpath,
+              document,
+              null,
+              XPathResult.FIRST_ORDERED_NODE_TYPE,
+              null
+            );
+            logoutButton = result.singleNodeValue;
+          } else {
+            logoutButton = document.querySelector(selector);
+          }
+          if (logoutButton) break;
+        } catch (e) {
+          continue;
+        }
+      }
+
+      if (logoutButton) {
+        console.log("🔘 Found logout button, triggering click");
+        logoutButton.click();
+
+        // Wait for logout to process
+        setTimeout(() => {
+          redirectToSipadu();
+        }, 2000);
+      } else {
+        console.log(
+          "⚠️ No logout button found, proceeding with direct redirect"
+        );
+        // Try to trigger onSignOut event manually if available
+        if (window.gradio && window.gradio.client) {
+          try {
+            console.log("🔄 Attempting to trigger onSignOut event manually");
+            // This is a workaround to trigger logout via Gradio API
+            const event = new CustomEvent("gradio:logout", {
+              detail: { action: "logout" },
+            });
+            document.dispatchEvent(event);
+          } catch (e) {
+            console.log("⚠️ Could not trigger Gradio logout event");
+          }
+        }
+
+        // Proceed with redirect after short delay
+        setTimeout(() => {
+          redirectToSipadu();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error("❌ Error during logout process:", error);
+      showSipaduNotification(
+        "Error during logout, but will redirect anyway",
+        "warning"
+      );
+      setTimeout(() => redirectToSipadu(), 1000);
+    }
+  }
+
+  // ✅ ENHANCED: Redirect function with proper URL handling
+  function redirectToSipadu() {
+    console.log("🚀 Starting redirect to SIPADU...");
+
+    // Get SIPADU URL from environment-based config with multiple fallbacks
+    let sipaduUrl = "http://localhost.sipadubapelitbangbogor/home"; // Default fallback
+
+    // Priority 1: Window SIPADU_CONFIG from server environment
+    if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.HOME_URL) {
+      sipaduUrl = window.SIPADU_CONFIG.HOME_URL;
+      console.log("🏠 Using SIPADU URL from server config:", sipaduUrl);
+    }
+    // Priority 2: Window SIPADU_CONFIG API_BASE (construct home URL)
+    else if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.API_BASE) {
+      sipaduUrl = window.SIPADU_CONFIG.API_BASE + "/home";
+      console.log("🏠 Using SIPADU URL from API_BASE:", sipaduUrl);
+    }
+    // Priority 3: Try to get from localStorage (if previously stored)
+    else if (localStorage.getItem("sipadu_base_url")) {
+      sipaduUrl = localStorage.getItem("sipadu_base_url") + "/home";
+      console.log("🏠 Using SIPADU URL from localStorage:", sipaduUrl);
+    } else {
+      console.log("🏠 Using default SIPADU URL:", sipaduUrl);
     }
 
-    // Fallback: Create custom notification
+    console.log("🏠 Final redirect URL:", sipaduUrl);
+
+    // Show final notification
+    showSipaduNotification(
+      "Logout berhasil! Mengarahkan ke SIPADU...",
+      "success"
+    );
+
+    // ✅ ENHANCED: Clear any remaining data before redirect
+    try {
+      // Clear any cookies related to the session
+      document.cookie.split(";").forEach((c) => {
+        const eqPos = c.indexOf("=");
+        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+        document.cookie =
+          name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      });
+
+      // Clear any IndexedDB or WebSQL if used
+      if (window.indexedDB) {
+        // Clear common IndexedDB databases
+        const databaseNames = ["kotaemon", "gradio", "user_data"];
+        databaseNames.forEach((dbName) => {
+          try {
+            const deleteReq = indexedDB.deleteDatabase(dbName);
+            deleteReq.onerror = () =>
+              console.log(`Could not delete ${dbName} database`);
+            deleteReq.onsuccess = () =>
+              console.log(`Deleted ${dbName} database`);
+          } catch (e) {
+            // Ignore errors
+          }
+        });
+      }
+    } catch (error) {
+      console.log("⚠️ Error clearing additional data:", error);
+    }
+
+    // Redirect after notification with enhanced clearing
+    setTimeout(() => {
+      try {
+        // Store the base URL for future use
+        if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.API_BASE) {
+          localStorage.setItem(
+            "sipadu_base_url",
+            window.SIPADU_CONFIG.API_BASE
+          );
+        }
+
+        console.log("🚀 Redirecting to:", sipaduUrl);
+
+        // ✅ ENHANCED: Force page reload dengan new URL and clear referrer
+        window.location.replace(sipaduUrl);
+
+        // Fallback for older browsers
+        setTimeout(() => {
+          window.location.href = sipaduUrl;
+        }, 500);
+      } catch (error) {
+        console.error("❌ Redirect failed:", error);
+        showSipaduNotification(
+          "Gagal mengarahkan ke SIPADU. Silakan buka manual.",
+          "error"
+        );
+        // Ultimate fallback: open in new tab
+        try {
+          window.open(sipaduUrl, "_blank");
+        } catch (e) {
+          // If all else fails, show instructions
+          alert(`Silakan buka URL ini secara manual: ${sipaduUrl}`);
+        }
+      }
+    }, 1500);
+  }
+
+  // ✅ ENHANCED: Improved notification system
+  function showSipaduNotification(message, type = "info") {
+    console.log(`🔔 ${type.toUpperCase()}: ${message}`);
+
+    // Try to use Gradio's notification system if available
+    if (window.gradio && window.gradio.client) {
+      try {
+        // Attempt to use Gradio's built-in notification
+        if (type === "info" && window.gr && window.gr.Info) {
+          window.gr.Info(message);
+          return;
+        } else if (type === "success" && window.gr && window.gr.Info) {
+          window.gr.Info(message);
+          return;
+        } else if (type === "warning" && window.gr && window.gr.Warning) {
+          window.gr.Warning(message);
+          return;
+        } else if (type === "error" && window.gr && window.gr.Error) {
+          window.gr.Error(message);
+          return;
+        }
+      } catch (e) {
+        console.log(
+          "Could not use Gradio notification, falling back to custom"
+        );
+      }
+    }
+
+    // Create custom notification
     const notification = document.createElement("div");
     notification.className = `sipadu-notification sipadu-notification-${type}`;
     notification.innerHTML = `
@@ -309,7 +608,7 @@ function run() {
       10
     );
 
-    // Auto remove after 3 seconds
+    // Auto remove after 4 seconds (longer for logout messages)
     setTimeout(() => {
       notification.classList.remove("sipadu-notification-show");
       setTimeout(() => {
@@ -317,8 +616,14 @@ function run() {
           notification.parentNode.removeChild(notification);
         }
       }, 300);
-    }, 3000);
+    }, 4000);
   }
+
+  // ✅ NEW: Make functions globally available to prevent ReferenceError
+  window.showSipaduNotification = showSipaduNotification;
+  window.closeSipaduConfirmation = closeSipaduConfirmation;
+  window.performProperLogout = performProperLogout;
+  window.redirectToSipadu = redirectToSipadu;
 
   // Hide specific tabs from main navigation
   function hideSpecificTabs() {
@@ -638,6 +943,15 @@ function run() {
       if (mutation.type === "childList") {
         hideSpecificTabs();
         addSipaduLogo();
+
+        // ✅ NEW: Also refresh tab navigation when tabs change
+        if (
+          mutation.target.classList &&
+          mutation.target.classList.contains("tab-nav")
+        ) {
+          console.log("🔄 Tab navigation changed, refreshing...");
+          refreshTabNavigation();
+        }
       }
     });
   });
@@ -656,4 +970,60 @@ function run() {
     hideSpecificTabs();
     addSipaduLogo();
   }, 3000);
+
+  // ✅ ENHANCED: Periodic session monitoring
+  const monitorUserSession = () => {
+    setInterval(() => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentToken = urlParams.get("token");
+      const storedToken = localStorage.getItem("current_session_token");
+
+      if (currentToken && storedToken && currentToken !== storedToken) {
+        console.log("🔄 User session change detected during monitoring");
+        clearAllCacheData();
+        localStorage.setItem("current_session_token", currentToken);
+
+        // Force page reload untuk ensure fresh data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    }, 5000); // Check every 5 seconds
+  };
+
+  // Start session monitoring
+  monitorUserSession();
+
+  // ✅ ENHANCED: Force data refresh function
+  window.forceDataRefresh = () => {
+    console.log("🔄 Forcing data refresh...");
+    clearAllCacheData();
+
+    // Trigger Gradio refresh if available
+    if (window.gradio && window.gradio.client) {
+      try {
+        const refreshEvent = new CustomEvent("gradio:refresh", {
+          detail: { force: true },
+        });
+        document.dispatchEvent(refreshEvent);
+      } catch (e) {
+        console.log("Could not trigger Gradio refresh:", e);
+      }
+    }
+  };
+
+  // ✅ ENHANCED: Clear localStorage function yang lebih comprehensive
+  window.clearUserSession = () => {
+    console.log("🗑️ Clearing user session completely...");
+    clearAllCacheData();
+
+    // Clear cookies
+    document.cookie.split(";").forEach((c) => {
+      const eqPos = c.indexOf("=");
+      const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    });
+
+    console.log("✅ User session cleared completely");
+  };
 }

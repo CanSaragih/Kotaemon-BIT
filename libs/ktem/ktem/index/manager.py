@@ -25,6 +25,7 @@ class IndexManager:
         self._indices = []
         self._index_types: dict[str, Type[BaseIndex]] = {}
 
+
     @property
     def index_types(self) -> dict:
         """List the index_type of the index"""
@@ -183,14 +184,49 @@ class IndexManager:
         """
         self.load_index_types()
 
+        # ✅ NEW: Clean up old indices that are no longer in configuration
+        self._cleanup_obsolete_indices()
+
+        # Build new indices from configuration
         for index in settings.KH_INDICES:
             if not self.exists(name=index["name"]):
+                print(f"🔨 Building new index: {index['name']}")
                 self.build_index(**index)
 
+        # Start indices from database
         with Session(engine) as sess:
             index_defs = sess.exec(select(Index))
             for index_def in index_defs:
+                print(f"🚀 Starting index: {index_def.name} (ID: {index_def.id})")
                 self.start_index(**index_def.model_dump())
+
+
+    def _cleanup_obsolete_indices(self):
+        """Clean up indices that exist in database but not in current configuration"""
+
+        # Get list of current configured index names
+        configured_names = [idx["name"] for idx in settings.KH_INDICES]
+
+        # Check database for indices not in current configuration
+        with Session(engine) as sess:
+            all_db_indices = sess.exec(select(Index)).all()
+            obsolete_indices = []
+
+            for db_index in all_db_indices:
+                if db_index.name not in configured_names:
+                    obsolete_indices.append(db_index)
+                    print(f"🗑️ Found obsolete index: {db_index.name} (ID: {db_index.id})")
+
+            # Delete obsolete indices
+            if obsolete_indices:
+                print(f"🗑️ Deleting {len(obsolete_indices)} obsolete indices...")
+                for obsolete_index in obsolete_indices:
+                    print(f"   - Deleting: {obsolete_index.name}")
+                    sess.delete(obsolete_index)
+                sess.commit()
+                print("✅ Obsolete indices cleaned up")
+            else:
+                print("✅ No obsolete indices found")
 
     @property
     def indices(self):

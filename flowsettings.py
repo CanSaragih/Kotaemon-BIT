@@ -20,7 +20,7 @@ KH_APP_VERSION = config("KH_APP_VERSION", None)
 if not KH_APP_VERSION:
     try:
         # Caution: This might produce the wrong version
-        # https://stackoverflojw.com/a/59533071
+        # https://stackoverflow.com/a/59533071
         KH_APP_VERSION = version(KH_PACKAGE_NAME)
     except Exception:
         KH_APP_VERSION = "local"
@@ -358,24 +358,13 @@ USE_NANO_GRAPHRAG = config("USE_NANO_GRAPHRAG", default=False, cast=bool)
 USE_LIGHTRAG = config("USE_LIGHTRAG", default=True, cast=bool)
 USE_MS_GRAPHRAG = config("USE_MS_GRAPHRAG", default=True, cast=bool)
 
-GRAPHRAG_INDEX_TYPES = []
+
+# ✅ CRITICAL FIX: Build GraphRAG indices hanya jika diperlukan
+GRAPHRAG_INDICES = []
 
 if USE_MS_GRAPHRAG:
-    GRAPHRAG_INDEX_TYPES.append("ktem.index.file.graph.GraphRAGIndex")
-if USE_NANO_GRAPHRAG:
-    GRAPHRAG_INDEX_TYPES.append("ktem.index.file.graph.NanoGraphRAGIndex")
-if USE_LIGHTRAG:
-    GRAPHRAG_INDEX_TYPES.append("ktem.index.file.graph.LightRAGIndex")
-
-KH_INDEX_TYPES = [
-    "ktem.index.file.FileIndex",
-    *GRAPHRAG_INDEX_TYPES,
-]
-
-GRAPHRAG_INDICES = [
-    {
-        "name": graph_type.split(".")[-1].replace("Index", "")
-        + " Collection",  # get last name
+    GRAPHRAG_INDICES.append({
+        "name": "GraphRAG Collection",
         "config": {
             "supported_file_types": (
                 ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
@@ -383,14 +372,44 @@ GRAPHRAG_INDICES = [
             ),
             "private": True,
         },
-        "index_type": graph_type,
-    }
-    for graph_type in GRAPHRAG_INDEX_TYPES
+        "index_type": "ktem.index.file.graph.GraphRAGIndex",
+    })
+
+if USE_LIGHTRAG:
+    GRAPHRAG_INDICES.append({
+        "name": "LightRAG Collection",
+        "config": {
+            "supported_file_types": (
+                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+            ),
+            "private": True,
+        },
+        "index_type": "ktem.index.file.graph.LightRAGIndex",
+    })
+
+if USE_NANO_GRAPHRAG:
+    GRAPHRAG_INDICES.append({
+        "name": "NanoGraphRAG Collection",
+        "config": {
+            "supported_file_types": (
+                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+            ),
+            "private": True,
+        },
+        "index_type": "ktem.index.file.graph.NanoGraphRAGIndex",
+    })
+
+KH_INDEX_TYPES = [
+    "ktem.index.file.FileIndex",
+    *[idx["index_type"] for idx in GRAPHRAG_INDICES],
 ]
 
+# ✅ CRITICAL FIX: KH_INDICES hanya berisi yang diperlukan
 KH_INDICES = [
     {
-        "name": "Koleksi Dokumen",
+        "name": "File Collection",
         "config": {
             "supported_file_types": (
                 ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
@@ -400,17 +419,60 @@ KH_INDICES = [
         },
         "index_type": "ktem.index.file.FileIndex",
     },
-    *GRAPHRAG_INDICES,
+    *GRAPHRAG_INDICES,  # Hanya tambahkan yang aktif
 ]
+
+# ✅ TEMPORARY HARDCODE TEST - Paksa hanya 3 indices
+KH_INDICES = [
+    {
+        "name": "File Collection",
+        "config": {
+            "supported_file_types": (
+                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+            ),
+            "private": True,
+        },
+        "index_type": "ktem.index.file.FileIndex",
+    },
+    {
+        "name": "GraphRAG Collection",
+        "config": {
+            "supported_file_types": (
+                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+            ),
+            "private": True,
+        },
+        "index_type": "ktem.index.file.graph.GraphRAGIndex",
+    },
+    {
+        "name": "LightRAG Collection",
+        "config": {
+            "supported_file_types": (
+                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+            ),
+            "private": True,
+        },
+        "index_type": "ktem.index.file.graph.LightRAGIndex",
+    },
+]
+
 
 # Application settings
 KH_APP_NAME = "SIPADU AI TOOLS - Sistem manajemen data dan metadata terpusat, terstruktur dan terdokumentasi"
 
 # SIPADU Integration Settings - FROM ENVIRONMENT VARIABLES
-SIPADU_API_BASE = config("SIPADU_API_BASE", default="http://localhost.sipadubapelitbangbogor")
+SIPADU_API_BASE = config("SIPADU_API_BASE", default="http://localhost.sipadubapelitbangor")
 SIPADU_HOME_URL = f"{SIPADU_API_BASE}/home"
 SIPADU_LOGO_PATH = "libs/ktem/ktem/assets/img/logo.png"
 
-# Log configuration for debugging
-print(f"🔧 SIPADU_API_BASE: {SIPADU_API_BASE}")
-print(f"🔧 SIPADU_HOME_URL: {SIPADU_HOME_URL}")
+
+# Application settings
+KH_APP_NAME = "SIPADU AI TOOLS - Sistem manajemen data dan metadata terpusat, terstruktur dan terdokumentasi"
+
+# SIPADU Integration Settings - FROM ENVIRONMENT VARIABLES
+SIPADU_API_BASE = config("SIPADU_API_BASE", default="http://localhost.sipadubapelitbangor")
+SIPADU_HOME_URL = f"{SIPADU_API_BASE}/home"
+SIPADU_LOGO_PATH = "libs/ktem/ktem/assets/img/logo.png"
