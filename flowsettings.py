@@ -143,7 +143,7 @@ if config("AZURE_OPENAI_API_KEY", default="") and config(
 OPENAI_DEFAULT = "<YOUR_OPENAI_KEY>"
 OPENAI_API_KEY = config("OPENAI_API_KEY", default=OPENAI_DEFAULT)
 GOOGLE_API_KEY = config("GOOGLE_API_KEY", default="your-key")
-IS_OPENAI_DEFAULT = len(OPENAI_API_KEY) > 0 and OPENAI_API_KEY != OPENAI_DEFAULT
+IS_OPENAI_DEFAULT = True
 
 if OPENAI_API_KEY:
     KH_LLMS["openai"] = {
@@ -196,7 +196,7 @@ if config("LOCAL_MODEL", default=""):
         "spec": {
             "__type__": "kotaemon.llms.ChatOpenAI",
             "base_url": KH_OLLAMA_URL,
-            "model": config("LOCAL_MODEL", default="qwen2.5:7b"),
+            "model": config("LOCAL_MODEL", default="qwen2.5:3b"),
             "api_key": "ollama",
         },
         "default": False,
@@ -205,7 +205,7 @@ if config("LOCAL_MODEL", default=""):
         "spec": {
             "__type__": "kotaemon.llms.LCOllamaChat",
             "base_url": KH_OLLAMA_URL.replace("v1/", ""),
-            "model": config("LOCAL_MODEL", default="qwen2.5:7b"),
+            "model": config("LOCAL_MODEL", default="qwen2.5:3b"),
             "num_ctx": 8192,
         },
         "default": False,
@@ -354,7 +354,7 @@ SETTINGS_REASONING = {
 }
 
 USE_GLOBAL_GRAPHRAG = config("USE_GLOBAL_GRAPHRAG", default=True, cast=bool)
-USE_NANO_GRAPHRAG = config("USE_NANO_GRAPHRAG", default=False, cast=bool)
+USE_NANO_GRAPHRAG = config("USE_NANO_GRAPHRAG", default=True, cast=bool)
 USE_LIGHTRAG = config("USE_LIGHTRAG", default=True, cast=bool)
 USE_MS_GRAPHRAG = config("USE_MS_GRAPHRAG", default=True, cast=bool)
 
@@ -367,8 +367,8 @@ if USE_MS_GRAPHRAG:
         "name": "GraphRAG Collection",
         "config": {
             "supported_file_types": (
-                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
-                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+                ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html"
             ),
             "private": True,
         },
@@ -380,8 +380,8 @@ if USE_LIGHTRAG:
         "name": "LightRAG Collection",
         "config": {
             "supported_file_types": (
-                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
-                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+                ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html"
             ),
             "private": True,
         },
@@ -393,8 +393,8 @@ if USE_NANO_GRAPHRAG:
         "name": "NanoGraphRAG Collection",
         "config": {
             "supported_file_types": (
-                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
-                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+                ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html"
             ),
             "private": True,
         },
@@ -412,52 +412,16 @@ KH_INDICES = [
         "name": "File Collection",
         "config": {
             "supported_file_types": (
-                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
-                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
+                ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pptx, .csv, .html"
             ),
             "private": True,
         },
         "index_type": "ktem.index.file.FileIndex",
     },
     *GRAPHRAG_INDICES,  # Hanya tambahkan yang aktif
-]
+] 
 
-# ✅ TEMPORARY HARDCODE TEST - Paksa hanya 3 indices
-KH_INDICES = [
-    {
-        "name": "File Collection",
-        "config": {
-            "supported_file_types": (
-                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
-                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
-            ),
-            "private": True,
-        },
-        "index_type": "ktem.index.file.FileIndex",
-    },
-    {
-        "name": "GraphRAG Collection",
-        "config": {
-            "supported_file_types": (
-                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
-                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
-            ),
-            "private": True,
-        },
-        "index_type": "ktem.index.file.graph.GraphRAGIndex",
-    },
-    {
-        "name": "LightRAG Collection",
-        "config": {
-            "supported_file_types": (
-                ".png, .jpeg, .jpg, .tiff, .tif, .pdf, .xls, .xlsx, .doc, .docx, "
-                ".pptx, .csv, .html, .mhtml, .txt, .md, .zip"
-            ),
-            "private": True,
-        },
-        "index_type": "ktem.index.file.graph.LightRAGIndex",
-    },
-]
 
 
 # Application settings

@@ -101,7 +101,7 @@ class App(BaseApp):
                         "Sumber Daya",
                         elem_id="resources-tab",
                         id="resources-tab",
-                        visible=False,  # Hidden until authenticated
+                        visible=True,  # Hidden until authenticated
                         elem_classes=["fill-main-area-height", "scrollable", "hidden-tab-ui"],
                     ) as self._tabs["resources-tab"]:
                         self.resources_page = ResourcesTab(self)
@@ -110,7 +110,7 @@ class App(BaseApp):
                     "Pengaturan",
                     elem_id="settings-tab", 
                     id="settings-tab",
-                    visible=False,  # Hidden until authenticated
+                    visible=True,  # Hidden until authenticated
                     elem_classes=["fill-main-area-height", "scrollable", "hidden-tab-ui"],
                 ) as self._tabs["settings-tab"]:
                     self.settings_page = SettingsPage(self)
@@ -248,7 +248,9 @@ class App(BaseApp):
                 if k == "login-tab":
                     tabs_update.append(gr.update(visible=False))
                 elif k == "resources-tab":
-                    tabs_update.append(gr.update(visible=is_admin))
+                    tabs_update.append(gr.update(visible=True))
+                elif k == "settings-tab":
+                    tabs_update.append(gr.update(visible=True))
                 else:
                     tabs_update.append(gr.update(visible=True))
 

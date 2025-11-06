@@ -691,7 +691,7 @@ class IndexDocumentPipeline(BaseFileIndexIndexing):
         return {
             "reader_mode": {
                 "name": "File loader",
-                "value": "default",
+                "value": "docling",
                 "choices": [
                     ("Default (open-source)", "default"),
                     ("Adobe API (figure+table extraction)", "adobe"),
