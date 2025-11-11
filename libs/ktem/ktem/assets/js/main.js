@@ -1,8 +1,6 @@
 function run() {
   // ✅ ENHANCED: Force clear any cached data including user session detection
   const clearAllCacheData = () => {
-    console.log("🗑️ FORCE clearing all cache data...");
-
     // Clear localStorage
     const keysToRemove = [
       "kotaemon_user_session",
@@ -20,13 +18,11 @@ function run() {
     keysToRemove.forEach((key) => {
       if (localStorage.getItem(key)) {
         localStorage.removeItem(key);
-        console.log(`🗑️ Removed localStorage: ${key}`);
       }
     });
 
     // Clear sessionStorage
     sessionStorage.clear();
-    console.log("🗑️ Cleared all sessionStorage");
 
     // Clear any IndexedDB
     if (window.indexedDB) {
@@ -52,10 +48,6 @@ function run() {
     const storedToken = localStorage.getItem("current_session_token");
 
     if (currentToken && storedToken && currentToken !== storedToken) {
-      console.log("🔄 USER SESSION CHANGE DETECTED!");
-      console.log(`Previous token: ${storedToken.substring(0, 20)}...`);
-      console.log(`New token: ${currentToken.substring(0, 20)}...`);
-
       // Clear all cached data immediately
       clearAllCacheData();
 
@@ -157,7 +149,6 @@ function run() {
           gradioContainer.style.visibility = "visible";
         }
 
-        // ✅ NEW: Force refresh tab navigation after load
         refreshTabNavigation();
       }, 500);
     }, 200);
@@ -165,8 +156,6 @@ function run() {
 
   // ✅ NEW: Function to refresh tab navigation
   function refreshTabNavigation() {
-    console.log("🔄 Refreshing tab navigation...");
-
     // Force re-render of tab navigation
     const tabNav = document.querySelector(".tab-nav");
     if (tabNav) {
@@ -174,8 +163,6 @@ function run() {
       tabNav.style.display = "none";
       tabNav.offsetHeight; // Force reflow
       tabNav.style.display = "";
-
-      console.log("✅ Tab navigation refreshed");
     }
 
     // Also trigger any Gradio refresh events
@@ -252,7 +239,6 @@ function run() {
           logo,
           firstTabButton.nextSibling
         );
-        console.log("✅ SIPADU clickable logo added to header");
       }
     }
   }
@@ -365,7 +351,6 @@ function run() {
 
       // ✅ 2. Clear sessionStorage
       sessionStorage.clear();
-      console.log("🗑️ Cleared all sessionStorage");
 
       // ✅ 3. Try to trigger Gradio logout if logout button exists
       const logoutSelectors = [
@@ -406,7 +391,6 @@ function run() {
       }
 
       if (logoutButton) {
-        console.log("🔘 Found logout button, triggering click");
         logoutButton.click();
 
         // Wait for logout to process
@@ -448,30 +432,23 @@ function run() {
 
   // ✅ ENHANCED: Redirect function with proper URL handling
   function redirectToSipadu() {
-    console.log("🚀 Starting redirect to SIPADU...");
-
-    // Get SIPADU URL from environment-based config with multiple fallbacks
-    let sipaduUrl = "http://localhost.sipadubapelitbangbogor/home"; // Default fallback
+    // Get SIPADU URL from .env SIPADI_API_BASE or fallback
+    let sipaduUrl = "http://localhost.sipadubapelitbangbogor/home";
 
     // Priority 1: Window SIPADU_CONFIG from server environment
     if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.HOME_URL) {
       sipaduUrl = window.SIPADU_CONFIG.HOME_URL;
-      console.log("🏠 Using SIPADU URL from server config:", sipaduUrl);
     }
     // Priority 2: Window SIPADU_CONFIG API_BASE (construct home URL)
     else if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.API_BASE) {
       sipaduUrl = window.SIPADU_CONFIG.API_BASE + "/home";
-      console.log("🏠 Using SIPADU URL from API_BASE:", sipaduUrl);
     }
     // Priority 3: Try to get from localStorage (if previously stored)
     else if (localStorage.getItem("sipadu_base_url")) {
       sipaduUrl = localStorage.getItem("sipadu_base_url") + "/home";
-      console.log("🏠 Using SIPADU URL from localStorage:", sipaduUrl);
     } else {
       console.log("🏠 Using default SIPADU URL:", sipaduUrl);
     }
-
-    console.log("🏠 Final redirect URL:", sipaduUrl);
 
     // Show final notification
     showSipaduNotification(

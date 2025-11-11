@@ -4,6 +4,7 @@ from typing import Optional
 
 import gradio as gr
 import pluggy
+from dotenv import load_dotenv
 from ktem import extension_protocol
 from ktem.assets import PDFJS_PREBUILT_DIR, KotaemonTheme
 from ktem.components import reasonings
@@ -14,7 +15,8 @@ from theflow.settings import settings
 from theflow.utils.modules import import_dotted_string
 
 BASE_PATH = os.environ.get("GR_FILE_ROOT_PATH", "")
-
+env_path = Path(__file__).parent.parent.parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 class BaseApp:
     """The main app of Kotaemon
@@ -184,9 +186,7 @@ class BaseApp:
         </script>
         """
         
-        # Get SIPADU URL from environment variables
-        import os
-        sipadu_api_base = os.getenv('SIPADU_API_BASE', 'http://localhost.sipadubapelitbangbogor')
+        sipadu_api_base = os.getenv('SIPADU_API_BASE')
         sipadu_home_url = f"{sipadu_api_base}/home"
         
         print(f"🏠 SIPADU API Base: {sipadu_api_base}")

@@ -19,7 +19,7 @@ logging.basicConfig(
 )
 
 load_dotenv()
-SIPADU_API_BASE = os.getenv("SIPADU_API_BASE", "http://localhost.sipadubapelitbangbogor")
+SIPADU_API_BASE = os.getenv("SIPADU_API_BASE")
 
 class LoginPage(BasePage):
 
