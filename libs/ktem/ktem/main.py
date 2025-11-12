@@ -98,7 +98,7 @@ class App(BaseApp):
             if not KH_DEMO_MODE:
                 if not KH_SSO_ENABLED:
                     with gr.Tab(
-                        "Sumber Daya",
+                        "Konfigurasi AI",
                         elem_id="resources-tab",
                         id="resources-tab",
                         visible=True,  # Hidden until authenticated

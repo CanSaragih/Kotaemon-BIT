@@ -142,7 +142,7 @@ if config("AZURE_OPENAI_API_KEY", default="") and config(
 
 OPENAI_DEFAULT = "<YOUR_OPENAI_KEY>"
 OPENAI_API_KEY = config("OPENAI_API_KEY", default=OPENAI_DEFAULT)
-GOOGLE_API_KEY = config("GOOGLE_API_KEY", default="your-key")
+GOOGLE_API_KEY = config("GOOGLE_API_KEY", default="AIzaSyAioEI55BGFu1QgubdAbNoedrmPBHuYH7w")
 IS_OPENAI_DEFAULT = True
 
 if OPENAI_API_KEY:
@@ -240,7 +240,7 @@ KH_LLMS["claude"] = {
 KH_LLMS["google"] = {
     "spec": {
         "__type__": "kotaemon.llms.chats.LCGeminiChat",
-        "model_name": "gemini-1.5-flash",
+        "model_name": "gemini-2.0-flash",
         "api_key": GOOGLE_API_KEY,
     },
     "default": not IS_OPENAI_DEFAULT,
@@ -355,8 +355,8 @@ SETTINGS_REASONING = {
 
 USE_GLOBAL_GRAPHRAG = config("USE_GLOBAL_GRAPHRAG", default=True, cast=bool)
 USE_NANO_GRAPHRAG = config("USE_NANO_GRAPHRAG", default=True, cast=bool)
-USE_LIGHTRAG = config("USE_LIGHTRAG", default=True, cast=bool)
-USE_MS_GRAPHRAG = config("USE_MS_GRAPHRAG", default=True, cast=bool)
+USE_LIGHTRAG = config("USE_LIGHTRAG", default=False, cast=bool)
+USE_MS_GRAPHRAG = config("USE_MS_GRAPHRAG", default=False, cast=bool)
 
 
 # ✅ CRITICAL FIX: Build GraphRAG indices hanya jika diperlukan

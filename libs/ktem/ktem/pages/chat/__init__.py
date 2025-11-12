@@ -322,9 +322,7 @@ class ChatPage(BasePage):
                 ) as self.chat_settings:
                     with gr.Row(elem_id="quick-setting-labels"):
                         gr.HTML("Metode Penalaran")
-                        gr.HTML(
-                            "Model", visible=not KH_DEMO_MODE and not KH_SSO_ENABLED
-                        )
+                        gr.HTML("Model", visible=False)
                         gr.HTML("Bahasa")
 
                     with gr.Row():
@@ -352,7 +350,7 @@ class ChatPage(BasePage):
                             value=model_setting.value,
                             container=False,
                             show_label=False,
-                            visible=not KH_DEMO_MODE and not KH_SSO_ENABLED,
+                            visible=False,
                         )
                         self.language = gr.Dropdown(
                             choices=language_setting.choices,

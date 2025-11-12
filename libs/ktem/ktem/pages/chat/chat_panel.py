@@ -7,12 +7,12 @@ KH_DEMO_MODE = getattr(flowsettings, "KH_DEMO_MODE", False)
 if not KH_DEMO_MODE:
     PLACEHOLDER_TEXT = (
         "Ini adalah awal dari percakapan baru.\n"
-        "Mulailah dengan mengunggah dokumen atau URL web. "
-        "Kunjungi tab Dokumen untuk opsi lainnya (misalnya: GraphRAG)."
+        "Mulailah dengan mengunggah file atau URL web. "
+        "Kunjungi tab File untuk opsi lainya."
     )
 else:
     PLACEHOLDER_TEXT = (
-        "Selamat datang di Demo Kotaemon."
+        "Selamat datang di Tools AI."
         "Mulailah dengan menelusuri percakapan yang sudah tersedia untuk orientasi.\n"
         "Lihat bagian Petunjuk untuk tips lebih lanjut."
     )

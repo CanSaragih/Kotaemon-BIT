@@ -124,7 +124,7 @@ class HelpPage:
                 ).replace(
                     "chat tab", "tab chat"
                 ).replace(
-                    "Resources tab", "tab Sumber Daya"
+                    "Resources tab", "tab Konfigurasi AI"
                 ).replace(
                     "File Index tab", "tab Indeks File"
                 ).replace(
