@@ -20,12 +20,10 @@ if GRADIO_TEMP_DIR is None:
     os.environ["GRADIO_TEMP_DIR"] = GRADIO_TEMP_DIR
 
 def validate_token_with_sipadu(token):
-    """Validate token with SIPADU API"""
     if not token:
         return False, {}, "No token provided"
     
     try:
-        print(f"🔐 Validating token with SIPADU: {SIPADU_VALIDATE_ENDPOINT}")
         
         headers = {
             'Accept': 'application/json',
@@ -75,21 +73,15 @@ def validate_token_with_sipadu(token):
         return False, {}, error_msg
 
 def main():
-    """Enhanced main function dengan session management"""
-    print("="*60)
-    print("🚀 SIPADU AI Tools (Kotaemon) - Starting")
-    print("="*60)
     
     # ✅ NEW: Clear any existing session data
     clear_existing_sessions()
     
     # Development mode check
     if os.getenv('KOTAEMON_DEV_MODE', '').lower() == 'true':
-        print("🔧 Development mode - skipping SSO authentication")
         auth_status = 'DEV_MODE'
         user_data = {'username': 'dev_user', 'nama_lengkap': 'Development User'}
     else:
-        print("🔐 Production mode - SIPADU authentication will be handled by Gradio")
         auth_status = 'PENDING'  # Will be handled in login.py
         user_data = {}
     
@@ -97,8 +89,6 @@ def main():
     os.environ['SIPADU_AUTH_STATUS'] = auth_status
     os.environ['SIPADU_USER_DATA'] = json.dumps(user_data)
     
-    print(f"🔧 Auth Status: {auth_status}")
-    print("🎯 Loading Kotaemon application...")
     
     # Load and launch the application
     try:
@@ -107,7 +97,6 @@ def main():
         app = App()
         demo = app.make()
         
-        print("🌐 Launching Gradio interface...")
         
         # Enhanced launch configuration
         launch_kwargs = {
@@ -127,14 +116,11 @@ def main():
         demo.launch(**launch_kwargs)
         
     except Exception as e:
-        print(f"❌ Error launching application: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
 
 def clear_existing_sessions():
-    """Clear any existing user sessions or cached data"""
-    print("🗑️ Clearing existing sessions and cached data...")
     
     try:
         # Clear environment session variables
@@ -158,23 +144,6 @@ def clear_existing_sessions():
     except Exception as e:
         print(f"❌ Error clearing sessions: {e}")
 
-# Debug function untuk check request
-def debug_request():
-    """Debug function to check what Gradio receives"""
-    
-    def debug_fn(request: gr.Request):
-        print("=== DEBUG REQUEST ===")
-        print(f"URL: {request.request.url if hasattr(request, 'request') else 'N/A'}")
-        print(f"Headers: {dict(request.headers)}")
-        print(f"Query Params: {request.query_params}")
-        print(f"Client: {request.client}")
-        print("=====================")
-        return "Debug completed"
-    
-    return debug_fn
-
-
-debug_fn = debug_request()
 
 if __name__ == "__main__":
     main()

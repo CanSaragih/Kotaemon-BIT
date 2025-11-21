@@ -228,6 +228,22 @@ if config("LOCAL_MODEL", default=""):
         "default": False,
     }
 
+HF_TOKEN = config("HF_TOKEN", default="")
+HF_MODEL = config("HF_MODEL", default="openai/gpt-oss-120b:novita")
+HF_EMBEDDING_MODEL = config("HF_EMBEDDING_MODEL", default="BAAI/bge-m3")
+
+if HF_TOKEN:
+    KH_LLMS["huggingface"] = {
+        "spec": {
+            "__type__": "kotaemon.llms.ChatOpenAI",
+            "base_url": "https://router.huggingface.co/v1",
+            "model": HF_MODEL,
+            "api_key": HF_TOKEN,
+            "timeout": 60,
+        },
+        "default": False,
+    }
+
 # additional LLM configurations
 KH_LLMS["claude"] = {
     "spec": {
@@ -290,23 +306,25 @@ KH_EMBEDDINGS["google"] = {
     },
     "default": not IS_OPENAI_DEFAULT,
 }
-KH_EMBEDDINGS["mistral"] = {
-    "spec": {
-        "__type__": "kotaemon.embeddings.LCMistralEmbeddings",
-        "model": "mistral-embed",
-        "api_key": config("MISTRAL_API_KEY", default="your-key"),
-    },
-    "default": False,
-}
-# KH_EMBEDDINGS["huggingface"] = {
+# KH_EMBEDDINGS["mistral"] = {
 #     "spec": {
-#         "__type__": "kotaemon.embeddings.LCHuggingFaceEmbeddings",
-#         "model_name": "sentence-transformers/all-mpnet-base-v2",
+#         "__type__": "kotaemon.embeddings.LCMistralEmbeddings",
+#         "model": "mistral-embed",
+#         "api_key": config("MISTRAL_API_KEY", default="your-key"),
 #     },
 #     "default": False,
 # }
 
-# default reranking models
+KH_EMBEDDINGS["huggingface_api"] = {
+    "spec": {
+            "__type__": "kotaemon.embeddings.LCHuggingFaceHubEmbeddings",
+            "repo_id": config("HF_EMBEDDING_MODEL", default="BAAI/bge-m3"),
+            "huggingfacehub_api_token": HF_TOKEN,
+        },
+        "default": False,
+    }
+
+
 KH_RERANKINGS["cohere"] = {
     "spec": {
         "__type__": "kotaemon.rerankings.CohereReranking",
