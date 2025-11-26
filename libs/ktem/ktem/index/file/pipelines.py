@@ -117,12 +117,15 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
         *args,
         **kwargs,
     ) -> list[RetrievedDocument]:
+        print("✅DEBUG >>>>> : Vectorstore yang dipakai:", type(self.VS))
+        print("✅DEBUG >>>>> : doc_ids:", doc_ids)
         """Retrieve document excerpts similar to the text
 
         Args:
             text: the text to retrieve similar documents
             doc_ids: list of document ids to constraint the retrieval
         """
+
         # flatten doc_ids in case of group of doc_ids are passed
         if doc_ids:
             flatten_doc_ids = []
@@ -182,6 +185,8 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
         table_pages = defaultdict(list)
         retrieved_id = set([doc.doc_id for doc in docs])
         for doc in docs:
+            print("✅ DEBUG CHAT >> : retrieved doc_id:", doc.doc_id)
+            print("✅ DEBUG CHAT >> : retrieved content:", doc.content[:200])
             if "page_label" not in doc.metadata:
                 continue
             if "file_name" not in doc.metadata:
@@ -356,6 +361,8 @@ class IndexPipeline(BaseComponent):
         thumbnail_docs = []
 
         for doc in docs:
+            print("✅ DEBUG CHAT >> : retrieved doc_id:", doc.doc_id)
+            print("✅ DEBUG CHAT >> : retrieved content:", doc.content[:200])
             doc_type = doc.metadata.get("type", "text")
             if doc_type == "text":
                 text_docs.append(doc)
@@ -430,6 +437,8 @@ class IndexPipeline(BaseComponent):
         with Session(engine) as session:
             nodes = []
             for chunk in chunks:
+                print("✅ DEBUG >> : chunk.doc_id:", chunk.doc_id)
+                print("✅ DEBUG >> : chunk.content:", chunk.content[:200])
                 nodes.append(
                     self.Index(
                         source_id=file_id,
@@ -441,13 +450,9 @@ class IndexPipeline(BaseComponent):
             session.commit()
 
     def handle_chunks_vectorstore(self, chunks, file_id):
-        """Run chunks"""
-        # run embedding, add to both vector store and doc store
         self.vector_indexing.add_to_vectorstore(chunks)
         self.vector_indexing.write_chunk_to_file(chunks)
-
         if self.VS:
-            # record in the index
             with Session(engine) as session:
                 nodes = []
                 for chunk in chunks:

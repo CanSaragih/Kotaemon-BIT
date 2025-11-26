@@ -23,22 +23,6 @@ function run() {
 
     // Clear sessionStorage
     sessionStorage.clear();
-
-    // Clear any IndexedDB
-    if (window.indexedDB) {
-      const databaseNames = ["kotaemon", "gradio", "user_data"];
-      databaseNames.forEach((dbName) => {
-        try {
-          const deleteReq = indexedDB.deleteDatabase(dbName);
-          deleteReq.onsuccess = () =>
-            console.log(`🗑️ Deleted database: ${dbName}`);
-        } catch (e) {
-          // Ignore errors
-        }
-      });
-    }
-
-    console.log("✅ All cache data cleared");
   };
 
   // ✅ NEW: Detect user session changes
@@ -616,7 +600,6 @@ function run() {
       // Hide tabs that match our criteria
       if (tabsToHide.includes(buttonText)) {
         button.style.display = "none";
-        console.log(`Hidden tab: ${buttonText}`);
       }
     });
 
@@ -926,7 +909,6 @@ function run() {
           mutation.target.classList &&
           mutation.target.classList.contains("tab-nav")
         ) {
-          console.log("🔄 Tab navigation changed, refreshing...");
           refreshTabNavigation();
         }
       }

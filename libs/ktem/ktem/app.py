@@ -209,15 +209,6 @@ class BaseApp:
             ".loading, .gradio-loading, body > .loading { display: none !important; }"
             "body { visibility: hidden; }" # Hide body until preloader is ready
             "</style>"
-            # Add SIPADU configuration to global scope - FROM ENVIRONMENT
-            "<script>"
-            f"window.SIPADU_CONFIG = {{ "
-            f"API_BASE: '{sipadu_api_base}', "
-            f"HOME_URL: '{sipadu_home_url}', "
-            f"LOGO_PATH: '{self._favicon}' "
-            f"}};"
-            "console.log('🏠 SIPADU Config loaded from environment:', window.SIPADU_CONFIG);"
-            "</script>"
         )
 
         with gr.Blocks(

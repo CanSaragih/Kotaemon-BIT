@@ -13,6 +13,7 @@ from .vectorstores import (
     MilvusVectorStore,
     QdrantVectorStore,
     SimpleFileVectorStore,
+    SupabaseVectorStore
 )
 
 __all__ = [
@@ -30,4 +31,5 @@ __all__ = [
     "LanceDBVectorStore",
     "MilvusVectorStore",
     "QdrantVectorStore",
+    "SupabaseVectorStore",
 ]

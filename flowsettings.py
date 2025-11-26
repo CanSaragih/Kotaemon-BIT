@@ -95,13 +95,26 @@ KH_DOCSTORE = {
     "__type__": "kotaemon.storages.LanceDBDocumentStore",
     "path": str(KH_USER_DATA_DIR / "docstore"),
 }
+# KH_VECTORSTORE = {
+# #     # "__type__": "kotaemon.storages.LanceDBVectorStore",
+    # "__type__": "kotaemon.storages.ChromaVectorStore",
+# #     # "__type__": "kotaemon.storages.MilvusVectorStore",
+# #     # "__type__": "kotaemon.storages.QdrantVectorStore",
+    # "path": str(KH_USER_DATA_DIR / "vectorstore"),
+# }
+
+SUPABASE_DB_URL = config(
+    "SUPABASE_DB_URL", 
+    default="postgresql://user:pass@host:5432/dbname"
+)
+
 KH_VECTORSTORE = {
-    # "__type__": "kotaemon.storages.LanceDBVectorStore",
-    "__type__": "kotaemon.storages.ChromaVectorStore",
-    # "__type__": "kotaemon.storages.MilvusVectorStore",
-    # "__type__": "kotaemon.storages.QdrantVectorStore",
-    "path": str(KH_USER_DATA_DIR / "vectorstore"),
+    "__type__": "kotaemon.storages.SupabaseVectorStore",  
+    "connection_string": SUPABASE_DB_URL,
+    "table_name": "vector_embeddings",
+    "embedding_dim": 3072,  # Sesuaikan dengan dimensi embedding yang digunakan
 }
+
 KH_LLMS = {}
 KH_EMBEDDINGS = {}
 KH_RERANKINGS = {}
@@ -151,7 +164,7 @@ if OPENAI_API_KEY:
             "__type__": "kotaemon.llms.ChatOpenAI",
             "temperature": 0,
             "base_url": config("OPENAI_API_BASE", default="")
-            or "https://api.openai.com/v1",
+            or "https://api.openai.comj/v1",
             "api_key": OPENAI_API_KEY,
             "model": config("OPENAI_CHAT_MODEL", default="gpt-4o-mini"),
             "timeout": 20,
@@ -164,7 +177,7 @@ if OPENAI_API_KEY:
             "base_url": config("OPENAI_API_BASE", default="https://api.openai.com/v1"),
             "api_key": OPENAI_API_KEY,
             "model": config(
-                "OPENAI_EMBEDDINGS_MODEL", default="text-embedding-3-large"
+                "OPENAI_EMBEDDINGS_MODEL", default="text-embedding-3-small"
             ),
             "timeout": 10,
             "context_length": 8191,
@@ -191,13 +204,19 @@ if VOYAGE_API_KEY:
         "default": False,
     }
 
-if config("LOCAL_MODEL", default=""):
-    KH_LLMS["ollama"] = {
+LOCAL_MODEL = config("LOCAL_MODEL", default="openai/gpt-oss-20b")
+LOCAL_MODEL_API_BASE = config("LOCAL_MODEL_API_BASE", default="")
+LOCAL_MODEL_API_KEY = config("LOCAL_MODEL_API_KEY", default="")
+
+if LOCAL_MODEL:
+    KH_LLMS["GPT-OSS-20b"] = {
         "spec": {
             "__type__": "kotaemon.llms.ChatOpenAI",
-            "base_url": KH_OLLAMA_URL,
-            "model": config("LOCAL_MODEL", default="qwen2.5:3b"),
-            "api_key": "ollama",
+            "temperature": 0,
+            "base_url": LOCAL_MODEL_API_BASE or "https://tp9la25qwt7std-8000.proxy.runpod.net/v1",
+            "model": LOCAL_MODEL,
+            "api_key": LOCAL_MODEL_API_KEY or "",
+            "timeout": 20,
         },
         "default": False,
     }
@@ -306,23 +325,14 @@ KH_EMBEDDINGS["google"] = {
     },
     "default": not IS_OPENAI_DEFAULT,
 }
-# KH_EMBEDDINGS["mistral"] = {
-#     "spec": {
-#         "__type__": "kotaemon.embeddings.LCMistralEmbeddings",
-#         "model": "mistral-embed",
-#         "api_key": config("MISTRAL_API_KEY", default="your-key"),
-#     },
-#     "default": False,
-# }
-
-KH_EMBEDDINGS["huggingface_api"] = {
+KH_EMBEDDINGS["mistral"] = {
     "spec": {
-            "__type__": "kotaemon.embeddings.LCHuggingFaceHubEmbeddings",
-            "repo_id": config("HF_EMBEDDING_MODEL", default="BAAI/bge-m3"),
-            "huggingfacehub_api_token": HF_TOKEN,
-        },
-        "default": False,
-    }
+        "__type__": "kotaemon.embeddings.LCMistralEmbeddings",
+        "model": "mistral-embed",
+        "api_key": config("MISTRAL_API_KEY", default="your-key"),
+    },
+    "default": False,
+}
 
 
 KH_RERANKINGS["cohere"] = {
@@ -372,7 +382,7 @@ SETTINGS_REASONING = {
 }
 
 USE_GLOBAL_GRAPHRAG = config("USE_GLOBAL_GRAPHRAG", default=True, cast=bool)
-USE_NANO_GRAPHRAG = config("USE_NANO_GRAPHRAG", default=True, cast=bool)
+USE_NANO_GRAPHRAG = config("USE_NANO_GRAPHRAG", default=False, cast=bool)
 USE_LIGHTRAG = config("USE_LIGHTRAG", default=False, cast=bool)
 USE_MS_GRAPHRAG = config("USE_MS_GRAPHRAG", default=False, cast=bool)
 
