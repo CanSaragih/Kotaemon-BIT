@@ -437,7 +437,7 @@ KH_INDEX_TYPES = [
 # ✅ CRITICAL FIX: KH_INDICES hanya berisi yang diperlukan
 KH_INDICES = [
     {
-        "name": "File Collection",
+        "name": "Koleksi File",
         "config": {
             "supported_file_types": (
                 ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "

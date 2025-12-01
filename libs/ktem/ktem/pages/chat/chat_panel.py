@@ -32,6 +32,7 @@ class ChatPanel(BasePage):
             show_copy_button=True,
             likeable=True,
             bubble_full_width=False,
+            elem_classes="ktem-chatbot",
         )
         with gr.Row():
             self.text_input = gr.MultimodalTextbox(

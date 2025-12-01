@@ -97,7 +97,7 @@ class LoginPage(BasePage):
             with gr.Column(elem_classes=["login-welcome-container"]):
                 self.welcome_message = gr.Markdown("", elem_classes=["login-welcome-message"])
             self.btn_login = gr.Button(
-                "🚀 Mulai Gunakan AI Tools", 
+                "Mulai Gunakan AI Tools", 
                 variant="primary", 
                 size="lg",
                 elem_classes=["login-button"]
@@ -128,7 +128,7 @@ class LoginPage(BasePage):
                     )
                     
                 self.btn_dev_login = gr.Button(
-                    "🚀 Mulai Gunakan AI Tools", 
+                    "Mulai Gunakan AI Tools", 
                     variant="primary",
                     elem_classes=["login-button"]
                 )
@@ -419,7 +419,6 @@ class LoginPage(BasePage):
 
     def _trigger_file_manager_refresh(self, user_id):
         """Trigger file manager refresh untuk user baru - CRITICAL FIX"""
-        logger.info(f"🔄 Triggering file manager refresh for user: {user_id}")
         
         try:
             # ✅ 1. Clear all file manager cache first

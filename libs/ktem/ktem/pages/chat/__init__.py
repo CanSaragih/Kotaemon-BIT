@@ -298,6 +298,7 @@ class ChatPage(BasePage):
                             elem_id=(
                                 "quick-url" if not KH_DEMO_MODE else "quick-url-demo"
                             ),
+                            elem_classes="highlight-url-field",
                         )
 
                 if not KH_DEMO_MODE:
@@ -339,12 +340,26 @@ class ChatPage(BasePage):
                             "simple"
                         ].settings["highlight_citation"]
 
+                        allowed_reasonings = ["simple", "complex"]
+                        filtered_choices = [
+                            choice for choice in reasoning_setting.choices
+                            if (isinstance(choice, (tuple, list)) and choice[1] in allowed_reasonings)
+                            or (isinstance(choice, str) and choice in allowed_reasonings)
+                        ]
+
                         self.reasoning_type = gr.Dropdown(
-                            choices=reasoning_setting.choices[:REASONING_LIMITS],
-                            value=reasoning_setting.value,
+                            choices=filtered_choices,
+                            value=filtered_choices[0][1] if filtered_choices and isinstance(filtered_choices[0], (tuple, list)) else filtered_choices[0] if filtered_choices else None,
                             container=False,
                             show_label=False,
                         )
+
+                        # self.reasoning_type = gr.Dropdown(
+                        #     choices=reasoning_setting.choices[:REASONING_LIMITS],
+                        #     value=reasoning_setting.value,
+                        #     container=False,
+                        #     show_label=False,
+                        # )
                         self.model_type = gr.Dropdown(
                             choices=model_setting.choices,
                             value=model_setting.value,

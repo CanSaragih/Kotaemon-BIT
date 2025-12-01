@@ -1267,3 +1267,37 @@ body.dark .sipadu-notification-message {
 #toggle-dark-button {
   right: 180px;
 }
+
+.highlight-url-field textarea {
+  /* Border & Outline */
+  border: 1px solid #edefed;
+  border-radius: 8px;
+  outline: none;
+
+  /* Typography */
+  font-size: 0.85rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, sans-serif;
+  line-height: 1.5;
+  color: #939493;
+
+  /* Box */
+  width: 100%;
+  min-height: 48px;
+  resize: vertical;
+}
+
+/* Placeholder Style */
+.highlight-url-field textarea::placeholder {
+  color: #999;
+  font-style: italic;
+  opacity: 1;
+}
+
+.ktem-chatbot {
+  font-size: 0.85rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, sans-serif;
+  line-height: 1.5;
+  color: #939493;
+}

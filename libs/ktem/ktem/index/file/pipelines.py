@@ -117,8 +117,6 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
         *args,
         **kwargs,
     ) -> list[RetrievedDocument]:
-        print("✅DEBUG >>>>> : Vectorstore yang dipakai:", type(self.VS))
-        print("✅DEBUG >>>>> : doc_ids:", doc_ids)
         """Retrieve document excerpts similar to the text
 
         Args:
@@ -185,8 +183,6 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
         table_pages = defaultdict(list)
         retrieved_id = set([doc.doc_id for doc in docs])
         for doc in docs:
-            print("✅ DEBUG CHAT >> : retrieved doc_id:", doc.doc_id)
-            print("✅ DEBUG CHAT >> : retrieved content:", doc.content[:200])
             if "page_label" not in doc.metadata:
                 continue
             if "file_name" not in doc.metadata:
@@ -225,83 +221,85 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
         )
         return docs
 
-    @classmethod
-    def get_user_settings(cls) -> dict:
-        from ktem.llms.manager import llms
+    # @classmethod
+    # def get_user_settings(cls) -> dict:
+    #     from ktem.llms.manager import llms
 
-        try:
-            reranking_llm = llms.get_default_name()
-            reranking_llm_choices = list(llms.options().keys())
-        except Exception as e:
-            logger.error(e)
-            reranking_llm = None
-            reranking_llm_choices = []
+    #     try:
+    #         reranking_llm = llms.get_default_name()
+    #         reranking_llm_choices = list(llms.options().keys())
+    #     except Exception as e:
+    #         logger.error(e)
+    #         reranking_llm = None
+    #         reranking_llm_choices = []
 
-        return {
-            "reranking_llm": {
-                "name": "LLM for relevant scoring",
-                "value": reranking_llm,
-                "component": "dropdown",
-                "choices": reranking_llm_choices,
-                "special_type": "llm",
-            },
-            "num_retrieval": {
-                "name": "Number of document chunks to retrieve",
-                "value": 10,
-                "component": "number",
-            },
-            "retrieval_mode": {
-                "name": "Retrieval mode",
-                "value": "hybrid",
-                "choices": ["vector", "text", "hybrid"],
-                "component": "dropdown",
-            },
-            "prioritize_table": {
-                "name": "Prioritize table",
-                "value": False,
-                "choices": [True, False],
-                "component": "checkbox",
-            },
-            "mmr": {
-                "name": "Use MMR",
-                "value": False,
-                "choices": [True, False],
-                "component": "checkbox",
-            },
-            "use_reranking": {
-                "name": "Use reranking",
-                "value": True,
-                "choices": [True, False],
-                "component": "checkbox",
-            },
-            "use_llm_reranking": {
-                "name": "Use LLM relevant scoring",
-                "value": not config("USE_LOW_LLM_REQUESTS", default=False, cast=bool),
-                "choices": [True, False],
-                "component": "checkbox",
-            },
-        }
+    #     return {
+    #         "reranking_llm": {
+    #             "name": "LLM for relevant scoring",
+    #             "value": reranking_llm,
+    #             "component": "dropdown",
+    #             "choices": reranking_llm_choices,
+    #             "special_type": "llm",
+    #         },
+    #         "num_retrieval": {
+    #             "name": "Number of document chunks to retrieve",
+    #             "value": 10,
+    #             "component": "number",
+    #         },
+    #         "retrieval_mode": {
+    #             "name": "Retrieval mode",
+    #             "value": "hybrid",
+    #             "choices": ["vector", "text", "hybrid"],
+    #             "component": "dropdown",
+    #         },
+    #         "prioritize_table": {
+    #             "name": "Prioritize table",
+    #             "value": False,
+    #             "choices": [True, False],
+    #             "component": "checkbox",
+    #         },
+    #         "mmr": {
+    #             "name": "Use MMR",
+    #             "value": False,
+    #             "choices": [True, False],
+    #             "component": "checkbox",
+    #         },
+    #         "use_reranking": {
+    #             "name": "Use reranking",
+    #             "value": True,
+    #             "choices": [True, False],
+    #             "component": "checkbox",
+    #         },
+    #         "use_llm_reranking": {
+    #             "name": "Use LLM relevant scoring",
+    #             "value": not config("USE_LOW_LLM_REQUESTS", default=False, cast=bool),
+    #             "choices": [True, False],
+    #             "component": "checkbox",
+    #         },
+    #     }
 
     @classmethod
     def get_pipeline(cls, user_settings, index_settings, selected):
-        """Get retriever objects associated with the index
-
-        Args:
-            settings: the settings of the app
-            kwargs: other arguments
-        """
-        use_llm_reranking = user_settings.get("use_llm_reranking", False)
+        """Get retriever objects associated with the index"""
+        # Tambahkan default value jika key tidak ada
+        get_extra_table = user_settings.get("prioritize_table", False)
+        top_k = user_settings.get("num_retrieval", 5)
+        mmr = user_settings.get("mmr", False)
+        retrieval_mode = user_settings.get("retrieval_mode", "hybrid")
+        use_llm_reranking = user_settings.get("use_llm_reranking", True)
+        use_reranking = user_settings.get("use_reranking", True)
+        reranking_llm = user_settings.get("reranking_llm", None)
 
         retriever = cls(
-            get_extra_table=user_settings["prioritize_table"],
-            top_k=user_settings["num_retrieval"],
-            mmr=user_settings["mmr"],
+            get_extra_table=get_extra_table,
+            top_k=top_k,
+            mmr=mmr,
             embedding=embedding_models_manager[
                 index_settings.get(
                     "embedding", embedding_models_manager.get_default_name()
                 )
             ],
-            retrieval_mode=user_settings["retrieval_mode"],
+            retrieval_mode=retrieval_mode,
             llm_scorer=(LLMTrulensScoring() if use_llm_reranking else None),
             rerankers=[
                 reranking_models_manager[
@@ -311,18 +309,18 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
                 ]
             ],
         )
-        if not user_settings["use_reranking"]:
+        if not use_reranking:
             retriever.rerankers = []  # type: ignore
 
         for reranker in retriever.rerankers:
             if isinstance(reranker, LLMReranking):
                 reranker.llm = llms.get(
-                    user_settings["reranking_llm"], llms.get_default()
+                    reranking_llm, llms.get_default()
                 )
 
         if retriever.llm_scorer:
             retriever.llm_scorer.llm = llms.get(
-                user_settings["reranking_llm"], llms.get_default()
+                reranking_llm, llms.get_default()
             )
 
         kwargs = {".doc_ids": selected}
@@ -361,8 +359,7 @@ class IndexPipeline(BaseComponent):
         thumbnail_docs = []
 
         for doc in docs:
-            print("✅ DEBUG CHAT >> : retrieved doc_id:", doc.doc_id)
-            print("✅ DEBUG CHAT >> : retrieved content:", doc.content[:200])
+
             doc_type = doc.metadata.get("type", "text")
             if doc_type == "text":
                 text_docs.append(doc)
@@ -695,16 +692,16 @@ class IndexDocumentPipeline(BaseFileIndexIndexing):
     def get_user_settings(cls):
         return {
             "reader_mode": {
-                "name": "File loader",
-                "value": "docling",
+                "name": "Pilih Pemroses File",
+                "value": "default",
                 "choices": [
-                    ("Default (open-source)", "default"),
-                    ("Adobe API (figure+table extraction)", "adobe"),
-                    (
-                        "Azure AI Document Intelligence (figure+table extraction)",
-                        "azure-di",
-                    ),
-                    ("Docling (figure+table extraction)", "docling"),
+                    ("Standar (Default)", "default"),
+                    # ("Adobe API (figure+table extraction)", "adobe"),
+                    # (
+                    #     "Azure AI Document Intelligence (figure+table extraction)",
+                    #     "azure-di",
+                    # ),
+                    ("Scan / OCR", "docling"),
                 ],
                 "component": "dropdown",
             },

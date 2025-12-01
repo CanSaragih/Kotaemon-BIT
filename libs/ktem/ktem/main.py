@@ -81,7 +81,7 @@ class App(BaseApp):
                         setattr(self, f"_index_{index.id}", page)
             elif len(self.index_manager.indices) > 1:
                 with gr.Tab(
-                    "File",
+                    "Koleksi File",
                     elem_id="indices-tab",
                     elem_classes=["fill-main-area-height", "scrollable", "indices-tab"],
                     id="indices-tab",
@@ -247,8 +247,6 @@ class App(BaseApp):
             for k in self._tabs.keys():
                 if k == "login-tab":
                     tabs_update.append(gr.update(visible=False))
-                elif k == "resources-tab":
-                    tabs_update.append(gr.update(visible=True))
                 elif k == "settings-tab":
                     tabs_update.append(gr.update(visible=True))
                 else:

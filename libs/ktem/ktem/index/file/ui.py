@@ -199,6 +199,10 @@ class FileIndexPage(BasePage):
                 "Unduh",
                 visible=False,
             )
+            self.rename_button = gr.Button(
+                "Ganti Nama",
+                visible=False,
+            )
             self.delete_button = gr.Button(
                 "Hapus",
                 variant="stop",
@@ -208,6 +212,18 @@ class FileIndexPage(BasePage):
                 "Tutup",
                 visible=False,
             )
+        
+        with gr.Group(visible=False) as self.rename_panel:
+            self.rename_input = gr.Textbox(
+                                                                            label="Nama file baru",
+                placeholder="Masukkan nama file baru...",
+                lines=1,
+                max_lines=1,
+                interactive=True,
+            )
+            with gr.Row():
+                self.rename_confirm_button = gr.Button("Simpan Nama", variant="primary")
+                self.rename_cancel_button = gr.Button("Batal", variant="secondary")
 
         with gr.Row() as self.selection_info:
             self.selected_file_id = gr.State(value=None)
@@ -682,6 +698,7 @@ class FileIndexPage(BasePage):
             gr.update(value="".join(chunks), visible=file_id is not None),
             gr.update(visible=file_id is not None),
             gr.update(visible=file_id is not None),
+            gr.update(visible=False),
             gr.update(visible=file_id is not None),
             gr.update(visible=file_id is not None),
         )
@@ -1019,6 +1036,7 @@ class FileIndexPage(BasePage):
                 self.delete_button,
                 self.download_single_button,
                 self.chat_button,
+                self.rename_button
             ],
             show_progress="hidden",
         )
@@ -1158,8 +1176,14 @@ class FileIndexPage(BasePage):
                 self.delete_button,
                 self.download_single_button,
                 self.chat_button,
+                self.rename_button
             ],
             show_progress="hidden",
+        )
+
+        self.rename_button.click(
+            fn=lambda: (gr.update(visible=True), gr.update(value="", visible=True)),
+            outputs=[self.rename_panel, self.rename_input],
         )
 
         self.group_list.select(
@@ -1179,6 +1203,7 @@ class FileIndexPage(BasePage):
                 gr.update(visible=True),
                 gr.update(visible=True),
                 gr.update(visible=True),
+
             ),
             outputs=[
                 self._group_info_panel,
@@ -1277,6 +1302,26 @@ class FileIndexPage(BasePage):
         for event in self._app.get_event(f"onFileIndex{self._index.id}Changed"):
             onGroupDeleted = onGroupDeleted.then(**event)
             onGroupSaved = onGroupSaved.then(**event)
+
+        self.rename_confirm_button.click(
+            fn=self.rename_file,
+            inputs=[self.selected_file_id, self.rename_input],
+            outputs=[
+                self.rename_panel,
+                self.rename_input,
+                self.selected_file_id,
+                self.selected_panel,
+                self.file_list_state,
+                self.file_list,
+                self._index.get_selector_component_ui().selector,         # Dropdown
+                self._index.get_selector_component_ui().selector_choices, # JSON
+            ],
+        )
+
+        self.rename_cancel_button.click(
+            fn=lambda: (gr.update(visible=False), gr.update(value="", visible=False)),
+            outputs=[self.rename_panel, self.rename_input],
+        )
 
     def _on_app_created(self):
         """Called when the app is created"""
@@ -1607,8 +1652,6 @@ class FileIndexPage(BasePage):
                     }
                 ]
             )
-
-        print(f"🔄 list_file called for user: {user_id}, pattern: '{name_pattern}'")
         
         Source = self._index._resources["Source"]
         
@@ -1637,8 +1680,6 @@ class FileIndexPage(BasePage):
                     }
                     for each in query_results
                 ]
-                
-                print(f"📁 FRESH QUERY: Found {len(results)} files for user {user_id}")
                 
             except Exception as e:
                 print(f"❌ Error in fresh file query: {e}")
@@ -1884,6 +1925,47 @@ class FileIndexPage(BasePage):
             file_names = []
 
         return gr.update(choices=file_names)
+    
+    def rename_file(self, file_id, new_name):
+        user_id = self._app.user_id.value if hasattr(self._app.user_id, "value") else self._app.user_id
+        filter_value = self.filter.value if hasattr(self.filter, "value") else self.filter
+        if not file_id or not new_name:
+            gr.Warning("Nama file tidak boleh kosong.")
+            results, file_list = self.list_file(user_id, filter_value)
+            file_names_update = self.list_file_names(results)
+            file_names_list = [(item["name"], item["id"]) for item in results] if results else []
+            return (
+                gr.update(visible=False),
+                gr.update(value="", visible=False),
+                None,
+                self.selected_panel_false,
+                results,
+                file_list.copy(),
+                file_names_update,   # untuk Dropdown
+                file_names_list,     # untuk JSON
+            )
+        with Session(engine) as session:
+            Source = self._index._resources["Source"]
+            file = session.query(Source).filter_by(id=file_id).first()
+            if not file:
+                gr.Warning("File tidak ditemukan.")
+            else:
+                file.name = new_name
+                session.commit()
+                gr.Info(f"Nama file berhasil diganti menjadi {new_name}")
+        results, file_list = self.list_file(user_id, filter_value)
+        file_names_update = self.list_file_names(results)
+        file_names_list = [(item["name"], item["id"]) for item in results] if results else []
+        return (
+            gr.update(visible=False),
+            gr.update(value="", visible=False),
+            None,
+            self.selected_panel_false,
+            results,
+            file_list.copy(),
+            file_names_update,   # untuk Dropdown
+            file_names_list,     # untuk JSON
+        )
 
 
 class FileSelector(BasePage):
@@ -2049,16 +2131,21 @@ class FileSelector(BasePage):
         
         if self._app.f_user_management:
             # ✅ ENHANCED: Better file loading on sign in/out
-            for event_name in ["onSignIn", "onSignOut"]:
-                self._app.subscribe_event(
-                    name=event_name,
-                    definition={
-                        "fn": lambda selected_files, user_id: self.load_files(
-                            [] if event_name == "onSignOut" else selected_files, 
-                            user_id if event_name == "onSignIn" else None
-                        ),
-                        "inputs": [self.selector, self._app.user_id],
-                        "outputs": [self.selector, self.selector_choices],
-                        "show_progress": "hidden",
-                    },
-                )
+            self._app.subscribe_event(
+                name="onSignIn",
+                definition={
+                    "fn": lambda selected_files, user_id: self.load_files([], user_id),
+                    "inputs": [self.selector, self._app.user_id],
+                    "outputs": [self.selector, self.selector_choices],
+                    "show_progress": "hidden",
+                },
+            )
+            self._app.subscribe_event(
+                name="onSignOut",
+                definition={
+                    "fn": lambda selected_files, user_id: self.load_files([], None),
+                    "inputs": [self.selector, self._app.user_id],
+                    "outputs": [self.selector, self.selector_choices],
+                    "show_progress": "hidden",
+                },
+            )

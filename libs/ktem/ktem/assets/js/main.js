@@ -592,6 +592,7 @@ function run() {
     const tabNavButtons = document.querySelectorAll(".tab-nav button");
 
     // List of tab names to hide (Indonesian)
+    // const tabsToHide = ["Bantuan", "Konfigurasi AI"];
     const tabsToHide = ["Bantuan"];
 
     tabNavButtons.forEach((button) => {
@@ -604,6 +605,7 @@ function run() {
     });
 
     // Also hide by tab IDs
+    // const tabsToHideById = ["#help-tab", "#resources-tab"];
     const tabsToHideById = ["#help-tab"];
     tabsToHideById.forEach((tabId) => {
       const tabButton = document.querySelector(
@@ -621,7 +623,7 @@ function run() {
   hideSpecificTabs();
 
   const version_node = document.createElement("p");
-  version_node.innerHTML = "version: KH_APP_VERSION";
+  // version_node.innerHTML = "version: KH_APP_VERSION";
   version_node.style = "position: fixed; top: 10px; right: 10px;";
   main_parent.appendChild(version_node);
 

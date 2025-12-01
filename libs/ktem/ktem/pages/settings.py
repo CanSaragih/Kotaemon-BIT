@@ -123,7 +123,7 @@ class SettingsPage(BasePage):
                 elem_id="save-setting-btn",
             )
         if self._app.f_user_management:
-            with gr.Tab("User settings"):
+            with gr.Tab("User settings", visible=False):
                 self.user_tab()
 
         self.app_tab()
@@ -242,7 +242,7 @@ class SettingsPage(BasePage):
                     self._app.tabs,
                     self._app._tabs["login-tab"],
                     self._app._tabs["chat-tab"],
-                    self._app._tabs.get("indices-tab", gr.update()),
+                    self._app._tabs["indices-tab"] if "indices-tab" in self._app._tabs else gr.Textbox(visible=False)
                 ],
                 show_progress="hidden"
             ).then(
@@ -429,28 +429,98 @@ class SettingsPage(BasePage):
                 if si.special_type == "embedding":
                     self._embeddings.append(obj)
 
-    def index_tab(self):
-        # TODO: double check if we need general
-        # with gr.Tab("General"):
-        #     for n, si in self._default_settings.index.settings.items():
-        #         obj = render_setting_item(si, si.value)
-        #         self._components[f"index.{n}"] = obj
+    # def index_tab(self):
+    #     # TODO: double check if we need general
+    #     # with gr.Tab("General"):
+    #     #     for n, si in self._default_settings.index.settings.items():
+    #     #         obj = render_setting_item(si, si.value)
+    #     #         self._components[f"index.{n}"] = obj
 
+    #     id2name = {k: v.name for k, v in self._app.index_manager.info().items()}
+    #     with gr.Tab("Retrieval settings", visible=self._render_index_tab):
+    #         for pn, sig in self._default_settings.index.options.items():
+    #             name = id2name.get(pn, f"<id {pn}>")
+    #             with gr.Tab(name):
+    #                 for n, si in sig.settings.items():
+    #                     obj = render_setting_item(si, si.value)
+    #                     self._components[f"index.options.{pn}.{n}"] = obj
+    #                     if n == "reader_mode":
+    #                         gr.HTML(
+    #                             """
+    #                             <div style="
+    #                                 margin-top: 10px;
+    #                                 padding: 14px 18px;
+    #                                 background: #f9fafb;
+    #                                 border: 1px solid #e5e7eb;
+    #                                 border-radius: 6px;
+    #                                 font-size: 14px;
+    #                                 color: #374151;
+    #                                 line-height: 1.55;
+    #                             ">
+    #                                 <div style="font-weight:600; font-size:14px; margin-bottom:6px; color:#43946c;">
+    #                                     Tips Memilih Pemroses File
+    #                                 </div>
+
+    #                                 <ul style="margin: 0; padding-left: 18px;">
+    #                                     <li>
+    #                                         <p style="color:#64748b">Pilih <b style="color:#64748b">Docling</b> jika file PDF merupakan hasil scan (gambar) atau mengandung tabel/figure kompleks.</p>
+    #                                     </li>
+    #                                     <li style="margin-top: 4px;">
+    #                                         <p style="color:#64748b">Pilih <b style="color:#64748b">Default (open-source)</b> jika PDF bukan hasil scan (teks bisa di-select) atau file dokumen biasa.</p>
+    #                                     </li>
+    #                                 </ul>
+    #                             </div>
+    #                             """
+    #                         )
+    #                     if si.special_type == "llm":
+    #                         self._llms.append(obj)
+    #                     if si.special_type == "embedding":
+    #                         self._embeddings.append(obj)
+
+    def index_tab(self):
         id2name = {k: v.name for k, v in self._app.index_manager.info().items()}
-        with gr.Tab("Retrieval settings", visible=self._render_index_tab):
-            for pn, sig in self._default_settings.index.options.items():
-                name = id2name.get(pn, f"<id {pn}>")
-                with gr.Tab(name):
-                    for n, si in sig.settings.items():
-                        obj = render_setting_item(si, si.value)
-                        self._components[f"index.options.{pn}.{n}"] = obj
-                        if si.special_type == "llm":
-                            self._llms.append(obj)
-                        if si.special_type == "embedding":
-                            self._embeddings.append(obj)
+        # Ambil hanya satu option (misal, yang pertama)
+        for pn, sig in self._default_settings.index.options.items():
+            name = id2name.get(pn, f"<id {pn}>")
+            with gr.Tab(name, visible=self._render_index_tab):
+                for n, si in sig.settings.items():
+                    obj = render_setting_item(si, si.value)
+                    self._components[f"index.options.{pn}.{n}"] = obj
+                    if n == "reader_mode":
+                        gr.HTML(
+                            """
+                            <div style="
+                                margin-top: 10px;
+                                padding: 14px 18px;
+                                background: #f9fafb;
+                                border: 1px solid #e5e7eb;
+                                border-radius: 6px;
+                                font-size: 14px;
+                                color: #374151;
+                                line-height: 1.55;
+                            ">
+                                <div style="font-weight:600; font-size:14px; margin-bottom:6px; color:#43946c;">
+                                    Tips Memilih Pemroses File
+                                </div>
+                                <ul style="margin: 0; padding-left: 18px;">
+                                    <li>
+                                        <p style="color:#64748b">Gunakan <b style="color:#64748b">Standar (Default)</b> untuk memproses file PDF atau teks standar.</p>
+                                    </li>
+                                    <li style="margin-top: 4px;">
+                                        <p style="color:#64748b">Gunakan <b style="color:#64748b">Scan / OCR</b> untuk memproses file hasil scan atau dokumen yang berasal dari gambar.</p>
+                                    </li>
+                                </ul>
+                            </div>
+                            """
+                        )
+                    if si.special_type == "llm":
+                        self._llms.append(obj)
+                    if si.special_type == "embedding":
+                        self._embeddings.append(obj)
+            break  # hanya render satu tab saja
 
     def reasoning_tab(self):
-        with gr.Tab("Reasoning settings", visible=self._render_reasoning_tab):
+        with gr.Tab("Reasoning settings", visible=False):
             with gr.Group():
                 for n, si in self._default_settings.reasoning.settings.items():
                     if n == "use":
