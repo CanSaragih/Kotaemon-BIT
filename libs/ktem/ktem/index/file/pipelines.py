@@ -117,12 +117,6 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
         *args,
         **kwargs,
     ) -> list[RetrievedDocument]:
-        """Retrieve document excerpts similar to the text
-
-        Args:
-            text: the text to retrieve similar documents
-            doc_ids: list of document ids to constraint the retrieval
-        """
 
         # flatten doc_ids in case of group of doc_ids are passed
         if doc_ids:
@@ -170,11 +164,29 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
             retrieval_kwargs["mode"] = VectorStoreQueryMode.MMR
             retrieval_kwargs["mmr_threshold"] = 0.5
 
-        # rerank
+        # ========== TAMBAHKAN KODE INI DI SINI (GANTI BAGIAN RETRIEVAL) ==========
+        # Retrieve dengan prioritas tabel
+        if self.get_extra_table or "tabel" in text.lower() or "table" in text.lower():
+            # Ambil lebih banyak dokumen untuk mencari tabel
+            temp_top_k = self.top_k * 3
+            retrieval_kwargs["top_k"] = temp_top_k
+        
         s_time = time.time()
-        print(f"retrieval_kwargs: {retrieval_kwargs.keys()}")
-        docs = self.vector_retrieval(text=text, top_k=self.top_k, **retrieval_kwargs)
+        docs = self.vector_retrieval(text=text, top_k=retrieval_kwargs.get("top_k", self.top_k), **retrieval_kwargs)
         print("retrieval step took", time.time() - s_time)
+        
+        # Prioritaskan dokumen tabel
+        table_docs = [doc for doc in docs if doc.metadata.get("type") == "table"]
+        text_docs = [doc for doc in docs if doc.metadata.get("type") != "table"]
+        
+        # Gabungkan dengan tabel di depan
+        prioritized_docs = table_docs + text_docs
+        
+        # Limit ke top_k
+        docs = prioritized_docs[:self.top_k]
+        
+        for doc in docs:
+            print(f"✅ FINAL DOC: type={doc.metadata.get('type')}, length={len(doc.content)}")
 
         if not self.get_extra_table:
             return docs
@@ -357,26 +369,50 @@ class IndexPipeline(BaseComponent):
         text_docs = []
         non_text_docs = []
         thumbnail_docs = []
+        table_docs = []
 
         for doc in docs:
-
             doc_type = doc.metadata.get("type", "text")
             if doc_type == "text":
                 text_docs.append(doc)
             elif doc_type == "thumbnail":
                 thumbnail_docs.append(doc)
+            elif doc_type == "table":
+                # Tabel tidak di-split agar tidak terpotong
+                table_docs.append(doc)
             else:
                 non_text_docs.append(doc)
 
         print(f"Got {len(thumbnail_docs)} page thumbnails")
+        print(f"Got {len(table_docs)} tables")
+        
         page_label_to_thumbnail = {
             doc.metadata["page_label"]: doc.doc_id for doc in thumbnail_docs
         }
 
+        # Split text docs dengan chunk size normal
         if self.splitter:
             all_chunks = self.splitter(text_docs)
         else:
             all_chunks = text_docs
+
+        # Untuk tabel, gunakan splitter khusus dengan chunk size lebih besar
+        if table_docs:
+            table_splitter = TokenSplitter(
+                chunk_size=4096,  # Chunk size lebih besar untuk tabel
+                chunk_overlap=200,
+                separator="\n",
+                backup_separators=["\n\n", ". "],
+            )
+            table_chunks = table_splitter(table_docs)
+            
+            # Pastikan metadata table tetap ada
+            for chunk in table_chunks:
+                chunk.metadata["type"] = "table"
+                if "table_origin" not in chunk.metadata:
+                    chunk.metadata["table_origin"] = chunk.text
+            
+            all_chunks.extend(table_chunks)
 
         # add the thumbnails doc_id to the chunks
         for chunk in all_chunks:
@@ -434,8 +470,6 @@ class IndexPipeline(BaseComponent):
         with Session(engine) as session:
             nodes = []
             for chunk in chunks:
-                print("✅ DEBUG >> : chunk.doc_id:", chunk.doc_id)
-                print("✅ DEBUG >> : chunk.content:", chunk.content[:200])
                 nodes.append(
                     self.Index(
                         source_id=file_id,

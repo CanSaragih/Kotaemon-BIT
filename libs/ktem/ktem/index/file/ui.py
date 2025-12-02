@@ -701,6 +701,7 @@ class FileIndexPage(BasePage):
             gr.update(visible=False),
             gr.update(visible=file_id is not None),
             gr.update(visible=file_id is not None),
+            gr.update(visible=file_id is not None),
         )
 
     def delete_event(self, file_id):
@@ -1015,6 +1016,7 @@ class FileIndexPage(BasePage):
                     self.delete_button,
                     self.download_single_button,
                     self.chat_button,
+                    self.rename_button
                 ],
                 show_progress="hidden",
             )

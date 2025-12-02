@@ -108,11 +108,14 @@ SUPABASE_DB_URL = config(
     default="postgresql://user:pass@host:5432/dbname"
 )
 
+KH_TABLE_CHUNK_SIZE = config("KH_TABLE_CHUNK_SIZE", default=4096, cast=int)
+KH_TABLE_OVERLAP = config("KH_TABLE_OVERLAP", default=100, cast=int)
+
 KH_VECTORSTORE = {
     "__type__": "kotaemon.storages.SupabaseVectorStore",  
     "connection_string": SUPABASE_DB_URL,
     "table_name": "vector_embeddings",
-    "embedding_dim": 3072,  # Sesuaikan dengan dimensi embedding yang digunakan
+    "embedding_dim": 3072,
 }
 
 KH_LLMS = {}
