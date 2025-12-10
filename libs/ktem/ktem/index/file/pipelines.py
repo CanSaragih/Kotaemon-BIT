@@ -146,6 +146,7 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
             chunk_ids = [r[0].target_id for r in results.all()]
 
         # do first round top_k extension
+        retrieval_kwargs["query_text"] = text.lower()  
         retrieval_kwargs["do_extend"] = True
         retrieval_kwargs["scope"] = chunk_ids
         retrieval_kwargs["filters"] = MetadataFilters(

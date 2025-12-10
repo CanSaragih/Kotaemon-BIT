@@ -199,7 +199,7 @@ class LoginPage(BasePage):
         self.current_user_data = gr.State(value={})  # Tambahan untuk simpan data user
 
     def perform_auth_check(self, request: gr.Request):
-        """Perform authentication check - ENHANCED dengan token change detection"""
+        """Perform authentication check - FIXED user switch detection"""
         logger.info("🔄 Enhanced authentication check with session detection")
         
         # Extract token dari query parameters
@@ -209,7 +209,7 @@ class LoginPage(BasePage):
             logger.debug(f"Query params: {dict(request.query_params)}")
             logger.debug(f"Token found: {token[:50] + '...' if token else 'None'}")
         
-        # ✅ ENHANCED: Check for existing session dan compare dengan new token
+        # ✅ Get existing session info
         current_session_token = os.getenv('CURRENT_SESSION_TOKEN', '')
         current_user_id = os.getenv('CURRENT_USER_ID', '')
         
@@ -221,37 +221,45 @@ class LoginPage(BasePage):
         
         if not token:
             logger.warning("No token found")
-            # ✅ ENHANCED: Clear existing session jika tidak ada token + trigger logout
+            # ✅ FIXED: Only logout if there WAS a previous session
             if current_session_token:
                 logger.info("🗑️ Clearing existing session - no token provided")
                 self._trigger_complete_logout()
             return 'NO_TOKEN', {}, "Token tidak ditemukan", {}
         
-        # ✅ ENHANCED: Detect token change (user switch) dengan immediate logout
-        if current_session_token and current_session_token != token:
-            logger.info(f"🔄 USER SWITCH DETECTED! Previous: {current_user_id}, New token: {token[:20]}...")
+        # ✅ CRITICAL FIX: Validate token FIRST before checking user switch
+        logger.info("Validating token with SIPADU...")
+        is_valid, user_data, error_msg = self.validate_sipadu_token(token)
+        
+        if not is_valid:
+            logger.warning(f"Authentication FAILED: {error_msg}")
+            self._trigger_complete_logout()
+            return 'FAILED', {}, error_msg, {}
+        
+        # ✅ CRITICAL FIX: Check for DIFFERENT user (not same user with new token)
+        new_user_id = f"sipadu_{user_data.get('user_id')}"
+        
+        # ✅ NEW LOGIC: Only trigger logout if user ID is DIFFERENT
+        if current_user_id and current_user_id != new_user_id:
+            logger.info(f"🔄 REAL USER SWITCH DETECTED! Old: {current_user_id}, New: {new_user_id}")
             logger.info("🚪 Triggering complete logout for previous user")
             self._trigger_complete_logout()
             # Add delay untuk ensure logout is complete
             import time
             time.sleep(1.0)
-        
-        # Validate token
-        logger.info("Validating token with SIPADU...")
-        is_valid, user_data, error_msg = self.validate_sipadu_token(token)
-        
-        if is_valid:
-            logger.info(f"Authentication SUCCESS for: {user_data.get('nama_lengkap')}")
-            
-            # ✅ NEW: Store session info untuk future comparison
+        elif current_session_token and current_session_token != token and current_user_id == new_user_id:
+            # ✅ SAME USER with NEW TOKEN - just update token, NO logout
+            logger.info(f"🔄 Same user {new_user_id} with new token - updating session")
             os.environ['CURRENT_SESSION_TOKEN'] = token
-            os.environ['CURRENT_USER_ID'] = f"sipadu_{user_data.get('user_id')}"
-            
-            return 'SUCCESS', user_data, None, user_data
+            # NO logout, NO delay
         else:
-            logger.warning(f"Authentication FAILED: {error_msg}")
-            self._trigger_complete_logout()
-            return 'FAILED', {}, error_msg, {}
+            # ✅ First login or same session - just set token
+            logger.info(f"✅ Setting session for user {new_user_id}")
+            os.environ['CURRENT_SESSION_TOKEN'] = token
+            os.environ['CURRENT_USER_ID'] = new_user_id
+        
+        logger.info(f"Authentication SUCCESS for: {user_data.get('nama_lengkap')}")
+        return 'SUCCESS', user_data, None, user_data
 
     def update_ui_based_on_auth(self, auth_status, user_data, error_msg, current_user_data):
         """Update UI berdasarkan status autentikasi - ENHANCED WELCOME VERSION"""
@@ -556,10 +564,10 @@ class LoginPage(BasePage):
             logger.exception(f"❌ Error clearing cached data: {e}")
 
     def on_register_events(self):
-        """Register events - ENHANCED VERSION dengan conversation dan file loading"""
+        """Register events - FINAL FIXED VERSION"""
         logger.info("Registering events...")
         
-        # TRIGGER AUTH CHECK ON PAGE LOAD
+        # ✅ CRITICAL FIX: Auth check dengan immediate file loading
         self._app.app.load(
             fn=self.perform_auth_check,
             inputs=[],
@@ -581,24 +589,24 @@ class LoginPage(BasePage):
             ],
             show_progress="hidden",
             queue=False
+        ).then(
+            # ✅ NEW: Auto-login jika auth SUCCESS (skip manual button click)
+            fn=self.auto_login_if_authenticated,
+            inputs=[self.auth_status, self.current_user_data],
+            outputs=[self._app.user_id],
+            show_progress="hidden",
+            queue=False
+        ).then(
+            # ✅ CRITICAL: Auto-trigger complete_login_process untuk SUCCESS
+            fn=self.auto_complete_login_if_needed,
+            inputs=[self._app.user_id, self.auth_status],
+            outputs=self._get_all_login_outputs(),
+            show_progress="hidden",
+            queue=False
         )
         
-        # ✅ ENHANCED: Manual login dengan proper conversation dan file loading
-        login_outputs = list(self._app._tabs.values()) + [
-            self._app.tabs, 
-            self._app.chat_page.chat_control.conversation  # ✅ DIRECT conversation update
-        ]
-        
-        # ✅ ADD: File loading outputs untuk setiap index - ENHANCED
-        for index in self._app.index_manager.indices:
-            if hasattr(index, 'file_index_page'):
-                login_outputs.extend([
-                    index.file_index_page.file_list_state,
-                    index.file_index_page.file_list,
-                    index.file_index_page.group_list_state,
-                    index.file_index_page.group_list,
-                    index.file_index_page.group_files
-                ])
+        # Manual login button (untuk Success UI case)
+        login_outputs = self._get_all_login_outputs()
         
         self.btn_login.click(
             fn=self.manual_login_handler,
@@ -609,18 +617,6 @@ class LoginPage(BasePage):
             fn=self.complete_login_process,
             inputs=[self._app.user_id, self.status_display, gr.State()],
             outputs=login_outputs,
-            show_progress="hidden"
-        ).then(
-            # ✅ CRITICAL: Trigger onSignIn event AFTER everything is set up
-            fn=lambda user_id: user_id,
-            inputs=[self._app.user_id],
-            outputs=[self._app.user_id],
-            show_progress="hidden"
-        ).success(
-            # ✅ TRIGGER: Manual event trigger untuk memastikan conversation reload
-            fn=self.trigger_conversation_reload,
-            inputs=[self._app.user_id],
-            outputs=[],
             show_progress="hidden"
         )
         
@@ -663,10 +659,70 @@ class LoginPage(BasePage):
             show_progress="hidden"
         ).then(
             fn=self.complete_login_process,
-            inputs=[self._app.user_id, self.status_display],
-            outputs=[self._app.tabs],
+            inputs=[self._app.user_id, self.status_display, gr.State()],
+            outputs=self._get_all_login_outputs(),
             show_progress="hidden"
         )
+
+    def _get_all_login_outputs(self):
+        """Get all outputs needed for login process - HELPER"""
+        login_outputs = list(self._app._tabs.values()) + [
+            self._app.tabs, 
+            self._app.chat_page.chat_control.conversation
+        ]
+        
+        # Add file outputs
+        for index in self._app.index_manager.indices:
+            if hasattr(index, 'file_index_page'):
+                login_outputs.extend([
+                    index.file_index_page.file_list_state,
+                    index.file_index_page.file_list,
+                    index.file_index_page.group_list_state,
+                    index.file_index_page.group_list,
+                    index.file_index_page.group_files
+                ])
+        
+        return login_outputs
+
+    def auto_login_if_authenticated(self, auth_status, current_user_data):
+        """Auto create/get user jika authentication SUCCESS - NEW METHOD"""
+        logger.info(f"🔄 auto_login_if_authenticated: status={auth_status}")
+        
+        if auth_status == 'SUCCESS' and current_user_data and current_user_data.get('user_id'):
+            logger.info("✅ Auto-creating/getting user for authenticated session")
+            user_id = self.create_or_get_user(current_user_data)
+            if user_id:
+                logger.info(f"✅ User ready: {user_id}")
+                return user_id
+        
+        logger.info("❌ Not authenticated or no user data")
+        return None
+
+    def auto_complete_login_if_needed(self, user_id, auth_status):
+        """Auto complete login process jika user_id ada - NEW METHOD"""
+        logger.info(f"🔄 auto_complete_login_if_needed: user_id={user_id}, status={auth_status}")
+        
+        if user_id and auth_status == 'SUCCESS':
+            logger.info(f"✅ Auto-completing login for user: {user_id}")
+            # ✅ Use existing complete_login_process
+            return self.complete_login_process(user_id, "Auto login successful", None)
+        
+        logger.info("❌ No auto-login needed")
+        # Return empty updates
+        empty_updates = []
+        for _ in self._app._tabs.values():
+            empty_updates.append(gr.update())
+        empty_updates.append(gr.update())  # tabs
+        empty_updates.append(gr.update())  # conversation
+        
+        # Add empty file updates
+        for index in self._app.index_manager.indices:
+            if hasattr(index, 'file_index_page'):
+                empty_updates.extend([
+                    gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
+                ])
+        
+        return empty_updates
 
     def dev_login(self, usn, pwd):
         """Development mode login"""
@@ -732,7 +788,7 @@ class LoginPage(BasePage):
             logger.exception(f"❌ Error injecting localStorage clear JS: {e}")
 
     def _manual_trigger_signout_events(self):
-        """Manually trigger onSignOut events untuk semua komponen"""
+        """Manually trigger onSignOut events untuk semua komponen - ENHANCED ERROR HANDLING"""
         try:
             logger.info("🔄 Manually triggering onSignOut events...")
             
@@ -740,17 +796,39 @@ class LoginPage(BasePage):
             signout_events = self._app.get_event("onSignOut")
             logger.info(f"📋 Found {len(signout_events)} onSignOut events to trigger")
             
-            # Trigger each event
+            # Trigger each event with proper error handling
             for i, event in enumerate(signout_events):
                 try:
                     if 'fn' in event:
                         event_fn = event['fn']
                         if callable(event_fn):
                             logger.info(f"🔄 Triggering onSignOut event {i+1}/{len(signout_events)}")
-                            # Call the function (most signout functions don't need inputs)
-                            event_fn()
+                            
+                            # ✅ CRITICAL FIX: Check if function needs arguments
+                            import inspect
+                            sig = inspect.signature(event_fn)
+                            params = sig.parameters
+                            
+                            # If function has no parameters, call without arguments
+                            if len(params) == 0:
+                                event_fn()
+                            else:
+                                # ✅ Try to call with None/empty values for required params
+                                try:
+                                    args = [None] * len(params)
+                                    event_fn(*args)
+                                except Exception as inner_e:
+                                    logger.warning(f"⚠️ Could not call event {i+1} with args: {inner_e}")
+                                    # Try without arguments as fallback
+                                    try:
+                                        event_fn()
+                                    except:
+                                        pass
+                                
                 except Exception as e:
-                    logger.exception(f"❌ Error triggering onSignOut event {i+1}: {e}")
+                    logger.warning(f"⚠️ Error triggering onSignOut event {i+1}: {e}")
+                    # Don't raise, continue with next event
+                    continue
                     
             logger.info("✅ Finished triggering onSignOut events")
             
@@ -805,89 +883,86 @@ class LoginPage(BasePage):
             logger.exception(f"❌ Error clearing application cache: {e}")
 
     def complete_login_process(self, user_id, status_msg, chat_history_list=None):
-        """Complete login process dengan proper data loading"""
-        logger.info(f"Complete login process called - User: {user_id}, Status: {status_msg}")
+        """Complete login process dengan proper data loading - FINAL VERSION"""
+        logger.info(f"🎯 complete_login_process START - User: {user_id}, Status: {status_msg}")
         
-        if user_id:
-            logger.info(f"Login successful, switching to chat tab for user: {user_id}")
-            
-            # ✅ CRITICAL FIX: Set user_id FIRST sebelum triggering events
-            self._app.user_id.value = user_id
-            
-            # ✅ ENHANCED: Clear any existing cached data first
-            self._clear_all_cached_data()
-            
-            # ✅ ENHANCED: Load chat history using existing chat_control (no new instance)
-            try:
-                if hasattr(self._app, 'chat_page') and hasattr(self._app.chat_page, 'chat_control'):
-                    chat_control = self._app.chat_page.chat_control
-                    chat_history = chat_control.load_chat_history(user_id)
-                    logger.info(f"✅ Loaded {len(chat_history)} conversations for user {user_id}")
-                    
-                    # Auto-select latest conversation if available
-                    latest_conv_id = chat_history[0][1] if chat_history else None
-                    logger.info(f"🎯 Auto-selecting conversation: {latest_conv_id}")
-                else:
-                    logger.warning("Chat control not available during login process")
-                    chat_history = []
-                    latest_conv_id = None
-                
-            except Exception as e:
-                logger.exception(f"❌ Error loading chat history: {e}")
+        if not user_id:
+            logger.warning("❌ No user_id - aborting login process")
+            return self._get_empty_login_outputs()
+        
+        logger.info(f"✅ Login successful for user: {user_id}")
+        
+        # ✅ 1. Set user_id FIRST
+        self._app.user_id.value = user_id
+        os.environ['CURRENT_USER_ID'] = f"sipadu_{user_id}"
+        logger.info(f"✅ Set environment CURRENT_USER_ID: sipadu_{user_id}")
+        
+        # ✅ 2. Clear any existing cached data
+        self._clear_all_cached_data()
+        logger.info("✅ Cleared cached data")
+        
+        # ✅ 3. Small delay for database consistency
+        import time
+        time.sleep(0.2)
+        
+        # ✅ 4. Load chat history
+        try:
+            if hasattr(self._app, 'chat_page') and hasattr(self._app.chat_page, 'chat_control'):
+                chat_control = self._app.chat_page.chat_control
+                chat_history = chat_control.load_chat_history(user_id)
+                logger.info(f"✅ Loaded {len(chat_history)} conversations")
+                latest_conv_id = chat_history[0][1] if chat_history else None
+            else:
+                logger.warning("⚠️ Chat control not available")
                 chat_history = []
                 latest_conv_id = None
-            
-            # ✅ CRITICAL FIX: Force reload file list untuk setiap index yang ada dengan immediate update
-            file_updates = []
-            try:
-                for index in self._app.index_manager.indices:
-                    if hasattr(index, 'file_index_page'):
-                        file_control = index.file_index_page
-                        
-                        # ✅ NEW: Force clear cache first
-                        if hasattr(file_control, '_clear_cached_file_data'):
-                            file_control._clear_cached_file_data()
-                        
-                        # ✅ CRITICAL: Force fresh database query untuk user ini
-                        logger.info(f"🔄 Force loading files for user {user_id} in index {index.id}")
-                        file_list_state, file_list_df = file_control.list_file(user_id, "")
-                        logger.info(f"✅ FORCE LOADED {len(file_list_state)} files for index {index.id}")
-                        
-                        # ✅ CRITICAL: Force fresh group query
-                        group_list_state, group_list_df = file_control.list_group(user_id, file_list_state)
-                        logger.info(f"✅ FORCE LOADED {len(group_list_state)} groups for index {index.id}")
-                        
-                        # ✅ CRITICAL: Update file selector dropdown
-                        if file_list_state:
-                            file_names = [(item["name"], item["id"]) for item in file_list_state]
-                        else:
-                            file_names = []
-                        file_names_update = gr.update(choices=file_names, value=[])
-                        
-                        # ✅ CRITICAL: Return proper Gradio updates untuk UI refresh
-                        file_updates.extend([
-                            gr.update(value=file_list_state),  # file_list_state
-                            gr.update(value=file_list_df),     # file_list DataFrame
-                            gr.update(value=group_list_state), # group_list_state  
-                            gr.update(value=group_list_df),    # group_list DataFrame
-                            file_names_update                  # group_files dropdown
-                        ])
-                        
-                        logger.info(f"✅ Prepared UI updates for {len(file_list_state)} files and {len(group_list_state)} groups")
+        except Exception as e:
+            logger.exception(f"❌ Error loading chat history: {e}")
+            chat_history = []
+            latest_conv_id = None
+        
+        # ✅ 5. CRITICAL: Force reload files dengan explicit logging
+        logger.info("🔄 STARTING FILE RELOAD...")
+        file_updates = []
+        try:
+            for index in self._app.index_manager.indices:
+                if hasattr(index, 'file_index_page'):
+                    file_control = index.file_index_page
+                    logger.info(f"🔄 Processing index {index.id} for user {user_id}")
+                    
+                    # Clear cache
+                    if hasattr(file_control, '_clear_cached_file_data'):
+                        file_control._clear_cached_file_data()
+                        logger.info(f"✅ Cleared cache for index {index.id}")
+                    
+                    # Force fresh query
+                    logger.info(f"🔍 Calling list_file for user {user_id}...")
+                    file_list_state, file_list_df = file_control.list_file(user_id, "")
+                    logger.info(f"✅ list_file returned {len(file_list_state)} files")
+                    
+                    logger.info(f"🔍 Calling list_group for user {user_id}...")
+                    group_list_state, group_list_df = file_control.list_group(user_id, file_list_state)
+                    logger.info(f"✅ list_group returned {len(group_list_state)} groups")
+                    
+                    # Prepare dropdown
+                    if file_list_state:
+                        file_names = [(item["name"], item["id"]) for item in file_list_state]
                     else:
-                        # ✅ Empty updates for indices without file_index_page
-                        file_updates.extend([
-                            gr.update(value=[]), 
-                            gr.update(value=None), 
-                            gr.update(value=[]), 
-                            gr.update(value=None), 
-                            gr.update(choices=[], value=[])
-                        ])
-                        logger.warning(f"File index page not available for index {index.id}")
-            except Exception as e:
-                logger.exception(f"❌ Error loading file lists: {e}")
-                # Provide empty updates for each index on error
-                for index in self._app.index_manager.indices:
+                        file_names = []
+                    file_names_update = gr.update(choices=file_names, value=[])
+                    
+                    # Add to updates
+                    file_updates.extend([
+                        gr.update(value=file_list_state),
+                        gr.update(value=file_list_df),
+                        gr.update(value=group_list_state),
+                        gr.update(value=group_list_df),
+                        file_names_update
+                    ])
+                    
+                    logger.info(f"✅ Prepared {len(file_list_state)} files and {len(group_list_state)} groups for UI update")
+                else:
+                    logger.warning(f"⚠️ No file_index_page for index {index.id}")
                     file_updates.extend([
                         gr.update(value=[]), 
                         gr.update(value=None), 
@@ -895,55 +970,57 @@ class LoginPage(BasePage):
                         gr.update(value=None), 
                         gr.update(choices=[], value=[])
                     ])
-            
-            # Prepare updates for all tabs
-            if hasattr(self._app, "_tabs") and hasattr(self._app, "tabs"):
-                updates = []
-                for k in self._app._tabs.keys():
-                    if k == "login-tab":
-                        updates.append(gr.update(visible=False))
-                    elif k == "resources-tab":
-                        updates.append(gr.update(visible=True))
-                    else:
-                        updates.append(gr.update(visible=True))
-                
-                updates.append(gr.update(selected="chat-tab"))
-                
-                # ✅ FIXED: Return proper conversation data
-                updates.append(gr.update(
-                    choices=chat_history, 
-                    value=latest_conv_id
-                ))
-                
-                # ✅ CRITICAL: Add file updates untuk immediate UI refresh
-                updates.extend(file_updates)
-                
-                logger.info(f"🚀 Login complete - returning {len(updates)} UI updates including {len(file_updates)} file updates")
-                return updates
-                
-        # Login failed case
-        logger.warning("❌ Login failed, staying on login tab")
-        if hasattr(self._app, "_tabs") and hasattr(self._app, "tabs"):
-            updates = []
-            for k in self._app._tabs.keys():
-                if k == "login-tab":
-                    updates.append(gr.update(visible=True))
-                else:
-                    updates.append(gr.update(visible=False))
-            updates.append(gr.update(selected="login-tab"))
-            updates.append(gr.update())  # Empty conversation
-            
-            # Add empty file updates
+        except Exception as e:
+            logger.exception(f"❌ Error in file reload: {e}")
+            # Empty updates on error
             for index in self._app.index_manager.indices:
-                updates.extend([
+                file_updates.extend([
                     gr.update(value=[]), 
                     gr.update(value=None), 
                     gr.update(value=[]), 
                     gr.update(value=None), 
                     gr.update(choices=[], value=[])
                 ])
-            
-            return updates
         
-        return [None, gr.update()]
+        logger.info(f"✅ FILE RELOAD COMPLETE - prepared {len(file_updates)} file updates")
+        
+        # ✅ 6. Prepare all outputs
+        updates = []
+        for k in self._app._tabs.keys():
+            if k == "login-tab":
+                updates.append(gr.update(visible=False))
+            else:
+                updates.append(gr.update(visible=True))
+        
+        updates.append(gr.update(selected="chat-tab"))
+        updates.append(gr.update(choices=chat_history, value=latest_conv_id))
+        updates.extend(file_updates)
+        
+        logger.info(f"🚀 complete_login_process COMPLETE - returning {len(updates)} updates")
+        logger.info(f"📊 Updates breakdown: {len(self._app._tabs)} tabs + 1 tab selector + 1 conversation + {len(file_updates)} file updates")
+        
+        return updates
+
+    def _get_empty_login_outputs(self):
+        """Get empty outputs for failed login - HELPER"""
+        updates = []
+        for k in self._app._tabs.keys():
+            if k == "login-tab":
+                updates.append(gr.update(visible=True))
+            else:
+                updates.append(gr.update(visible=False))
+        updates.append(gr.update(selected="login-tab"))
+        updates.append(gr.update())
+        
+        # Empty file updates
+        for index in self._app.index_manager.indices:
+            updates.extend([
+                gr.update(value=[]), 
+                gr.update(value=None), 
+                gr.update(value=[]), 
+                gr.update(value=None), 
+                gr.update(choices=[], value=[])
+            ])
+        
+        return updates
 

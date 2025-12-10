@@ -109,43 +109,85 @@ class FullQAPipeline(BaseReasoning):
         self, message: str, history: list
     ) -> tuple[list[RetrievedDocument], list[Document]]:
         """Retrieve the documents based on the message"""
-        # if len(message) < self.trigger_context:
-        #     # prefer adding context for short user questions, avoid adding context for
-        #     # long questions, as they are likely to contain enough information
-        #     # plus, avoid the situation where the original message is already too long
-        #     # for the model to handle
-        #     query = self.add_query_context(message, history).content
-        # else:
-        #     query = message
-        # print(f"Rewritten query: {query}")
-        query = None
-        if not query:
-            # TODO: previously return [], [] because we think this message as something
-            # like "Hello", "I need help"...
-            query = message
+
+        import re
+
+        # Extract keywords (remove filler words)
+        stopwords = {'ini', 'itu', 'yang', 'dan', 'atau', 'dari', 'ke', 'di', 'untuk', 
+                    'dengan', 'pada', 'adalah', 'secara', 'dapat', 'akan', 'telah',
+                    'deskripsikan', 'jelaskan', 'ringkas', 'uraikan', 'gambarkan'}
+        
+        tokens = re.findall(r'\w+', message.lower())
+        keywords = [t for t in tokens if t not in stopwords and len(t) > 2]
+        
+        # Build better query
+        enhanced_query = ' '.join(keywords)
+
+        print(f"📝 Original message: {message}")
+        print(f"🔑 Keywords extracted: {keywords}")
+        print(f"🔍 Enhanced query: {enhanced_query}")
+
+        # ✅ FIX: Fallback jika enhanced_query kosong
+        if not enhanced_query or len(enhanced_query.strip()) < 3:
+            print("⚠️ Enhanced query too short, using original message")
+            enhanced_query = message
+
+        retrieval_kwargs = {
+            "query_text": enhanced_query,  # ✅ Use enhanced query
+            "top_k": self.trigger_context * 2,
+        }
+        
+        retrieved_documents = []
+        for retriever in self.retrievers:
+            try:
+                docs = retriever(message, **retrieval_kwargs)
+                retrieved_documents.extend(docs)
+                print(f"✅ Retriever returned {len(docs)} documents")
+            except Exception as e:
+                print(f"❌ Error in retriever: {e}")
+                import traceback
+                traceback.print_exc()
+        
+        # ✅ Reranking jika aktif
+        if hasattr(self, 'reranker') and self.reranker:
+            from kotaemon.rerankings import BaseReranking
+            if isinstance(self.reranker, BaseReranking):
+                try:
+                    print(f"🔄 Reranking {len(retrieved_documents)} documents...")
+                    retrieved_documents = self.reranker.run(
+                        documents=retrieved_documents,
+                        query=message
+                    )[:self.trigger_context]
+                except Exception as e:
+                    print(f"⚠️ Reranking failed: {e}")
+
+        query = message  # Use original message for display
 
         docs, doc_ids = [], []
         plot_docs = []
 
         for idx, retriever in enumerate(self.retrievers):
             retriever_node = self._prepare_child(retriever, f"retriever_{idx}")
-            retriever_docs = retriever_node(text=query)
+            try:
+                retriever_docs = retriever_node(text=query)
 
-            retriever_docs_text = []
-            retriever_docs_plot = []
+                retriever_docs_text = []
+                retriever_docs_plot = []
 
-            for doc in retriever_docs:
-                if doc.metadata.get("type", "") == "plot":
-                    retriever_docs_plot.append(doc)
-                else:
-                    retriever_docs_text.append(doc)
+                for doc in retriever_docs:
+                    if doc.metadata.get("type", "") == "plot":
+                        retriever_docs_plot.append(doc)
+                    else:
+                        retriever_docs_text.append(doc)
 
-            for doc in retriever_docs_text:
-                if doc.doc_id not in doc_ids:
-                    docs.append(doc)
-                    doc_ids.append(doc.doc_id)
+                for doc in retriever_docs_text:
+                    if doc.doc_id not in doc_ids:
+                        docs.append(doc)
+                        doc_ids.append(doc.doc_id)
 
-            plot_docs.extend(retriever_docs_plot)
+                plot_docs.extend(retriever_docs_plot)
+            except Exception as e:
+                print(f"❌ Error in retriever node {idx}: {e}")
 
         info = [
             Document(
@@ -448,15 +490,29 @@ class FullQAPipeline(BaseReasoning):
             },
             "system_prompt": {
                 "name": "Prompt Sistem",
-                "value": ("Anda adalah analis kebijakan dan asisten ahli perencanaan pembangunan daerah berbasis data, Gunakan pendekatan atau kerangka analisis yang logis, Nyatakan asumsi serta keterbatasan data bila ada, Tampilkan proses perhitungan atau interpretasi kuantitatif apabila relevan, Jelaskan temuan utama dan relasi antar-informasi secara sistematis, Berikan rekomendasi strategis serta implikasinya bagi perencanaan daerah, Hindari kesimpulan yang tidak berbasis bukti atau logika yang dapat ditelusuri dan pastikan analisis bersifat transparan dan runtut."),
+                "value": (
+                    "Anda adalah asisten ahli perencanaan pembangunan daerah berbasis data. "
+                    "Berikan jawaban yang lengkap, detail, dan berbasis bukti dengan penjelasan yang memadai. "
+                    "Gunakan bullet points untuk struktur yang jelas. "
+                    "Sertakan contoh konkret dan data relevan jika tersedia. "
+                    "Jika tidak tahu jawabannya, jelaskan dengan detail mengapa informasi tidak tersedia."
+                ),
             },
             "qa_prompt": {
                 "name": "Prompt QA (berisi {context}, {question}, {lang})",
-                "value": DEFAULT_QA_TEXT_PROMPT,
+                "value": (
+                    "Berdasarkan konteks berikut, jawab pertanyaan dengan lengkap dan detail. "
+                    "Berikan penjelasan yang komprehensif dengan struktur yang jelas:\n"
+                    "Jika informasi tidak lengkap, jelaskan apa yang tersedia dan apa yang masih perlu dicari. "
+                    "Berikan jawaban dalam {lang}.\n\n"
+                    "{context}\n\n"
+                    "Pertanyaan: {question}\n\n"
+                    "Jawaban lengkap:"
+                ),
             },
             "n_last_interactions": {
                 "name": "Jumlah interaksi yang disertakan",
-                "value": 5,
+                "value": 2,
                 "component": "number",
                 "info": "Jumlah maksimum interaksi chat yang disertakan dalam LLM",
             },

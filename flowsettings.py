@@ -215,11 +215,12 @@ if LOCAL_MODEL:
     KH_LLMS["GPT-OSS-20b"] = {
         "spec": {
             "__type__": "kotaemon.llms.ChatOpenAI",
-            "temperature": 0,
+            "temperature": 0.4,
             "base_url": LOCAL_MODEL_API_BASE or "https://tp9la25qwt7std-8000.proxy.runpod.net/v1",
             "model": LOCAL_MODEL,
             "api_key": LOCAL_MODEL_API_KEY or "",
             "timeout": 20,
+            "max_tokens": 4096,
         },
         "default": False,
     }
@@ -373,14 +374,36 @@ SETTINGS_REASONING = {
     },
     "lang": {
         "name": "Bahasa",
-        "value": "id",  # Changed from "en" to "id"
+        "value": "id",
         "choices": [(lang, code) for code, lang in SUPPORTED_LANGUAGE_MAP.items()],
         "component": "dropdown",
     },
     "max_context_length": {
         "name": "Panjang konteks maksimal (LLM)",
-        "value": 32000,
+        "value": 16000,
         "component": "number",
+    },
+    "top_k": {
+        "name": "Jumlah dokumen yang diambil",
+        "value": 30,  # ✅ Naikkan dari 10 ke 30
+        "component": "number",
+    },
+    # ✅ TAMBAHAN: Reranking settings
+    "use_reranking": {
+        "name": "Gunakan Reranking",
+        "value": True,
+        "component": "checkbox",
+    },
+    "rerank_top_k": {
+        "name": "Jumlah dokumen setelah reranking",
+        "value": 10,
+        "component": "number",
+    },
+    # ✅ TAMBAHAN: Query rewriting
+    "use_query_rewriting": {
+        "name": "Gunakan Query Rewriting",
+        "value": True,
+        "component": "checkbox",
     },
 }
 

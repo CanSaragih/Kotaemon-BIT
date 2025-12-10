@@ -44,11 +44,14 @@ class ResourcesTab(BasePage):
                 },
             )
 
+            def hide_on_signout():
+                """Hide user management on signout - no arguments"""
+                return gr.update(visible=False)
+            
             self._app.subscribe_event(
                 name="onSignOut",
                 definition={
-                    "fn": self.toggle_user_management,
-                    "inputs": [self._app.user_id],
+                    "fn": hide_on_signout,
                     "outputs": [self.user_management_tab],
                     "show_progress": "hidden",
                 },

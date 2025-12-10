@@ -507,7 +507,7 @@ class SettingsPage(BasePage):
                                         <p style="color:#64748b">Gunakan <b style="color:#64748b">Standar (Default)</b> untuk memproses file PDF atau teks standar.</p>
                                     </li>
                                     <li style="margin-top: 4px;">
-                                        <p style="color:#64748b">Gunakan <b style="color:#64748b">Scan / OCR</b> untuk memproses file hasil scan atau dokumen yang berasal dari gambar.</p>
+                                        <p style="color:#64748b">Gunakan <b style="color:#64748b">Scan / OCR</b> untuk memproses file hasil scan atau dokumen yang berisi data tabel.</p>
                                     </li>
                                 </ul>
                             </div>

@@ -128,6 +128,89 @@ class App(BaseApp):
             with gr.Column(visible=False) as self.setup_page_wrapper:
                 self.setup_page = SetupPage(self)
 
+    def _clear_user_session_data(self):
+        """Clear user session data - MISSING METHOD FIX"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            logger.info("🗑️ Clearing user session data...")
+            
+            # Clear user_id
+            if hasattr(self, 'user_id'):
+                self.user_id.value = None
+            
+            # Clear settings state
+            if hasattr(self, 'settings_state'):
+                try:
+                    default_settings = self.default_settings.flatten()
+                    self.settings_state.value = default_settings
+                except:
+                    pass
+            
+            # Clear environment variables
+            for key in ['CURRENT_USER_ID', 'CURRENT_SESSION_TOKEN', 'SIPADU_AUTH_STATUS']:
+                if key in os.environ:
+                    del os.environ[key]
+                    
+            logger.info("✅ User session data cleared")
+            
+        except Exception as e:
+            logger.exception(f"❌ Error clearing user session data: {e}")
+    
+    def _force_clear_all_component_states(self):
+        """Force clear all component states"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            logger.info("🗑️ Force clearing all component states...")
+            
+            # Clear file manager states
+            self._clear_file_manager()
+            
+            # Clear chat states
+            if hasattr(self, 'chat_page') and hasattr(self.chat_page, 'chat_control'):
+                chat_control = self.chat_page.chat_control
+                if hasattr(chat_control, 'conversation'):
+                    chat_control.conversation.value = None
+                    chat_control.conversation.choices = []
+            
+            logger.info("✅ All component states cleared")
+            
+        except Exception as e:
+            logger.exception(f"❌ Error clearing component states: {e}")
+    
+    def _clear_file_manager(self):
+        """Clear file manager for all indices"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            logger.info("🗑️ Clearing file manager...")
+            
+            if hasattr(self, 'index_manager') and self.index_manager.indices:
+                for index in self.index_manager.indices:
+                    if hasattr(index, 'file_index_page'):
+                        file_page = index.file_index_page
+                        
+                        # Clear states
+                        if hasattr(file_page, 'file_list_state'):
+                            file_page.file_list_state.value = []
+                        if hasattr(file_page, 'group_list_state'):
+                            file_page.group_list_state.value = []
+                        
+                        # Clear cached data
+                        if hasattr(file_page, '_clear_cached_file_data'):
+                            file_page._clear_cached_file_data()
+                        
+                        logger.info(f"🗑️ Cleared file manager for index {index.id}")
+            
+            logger.info("✅ File manager cleared")
+            
+        except Exception as e:
+            logger.exception(f"❌ Error clearing file manager: {e}")
+
     def on_subscribe_public_events(self):
         # SIPADU SSO - Enhanced visibility logic with conversation loading
         from ktem.db.engine import engine
@@ -421,7 +504,13 @@ class App(BaseApp):
             # ✅ ADD: Clear file updates
             for index in self.index_manager.indices:
                 if hasattr(index, 'file_index_page'):
-                    signout_updates.extend([[], None, [], None, gr.update(choices=[])])  # Clear file lists
+                    signout_updates.extend([
+                        gr.update(value=[]),  # file_list_state
+                        gr.update(value=None),  # file_list
+                        gr.update(value=[]),  # group_list_state
+                        gr.update(value=None),  # group_list
+                        gr.update(choices=[], value=[])  # group_files
+                    ])
             
             return signout_updates
         

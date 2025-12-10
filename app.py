@@ -73,8 +73,14 @@ def validate_token_with_sipadu(token):
         return False, {}, error_msg
 
 def main():
+    print("=" * 80)
+    print("🚀 SIPADU AI TOOLS - STARTING APPLICATION")
+    print("=" * 80)
     
-    # ✅ NEW: Clear any existing session data
+    # ✅ NEW: Verify database connection
+    verify_database_connection()
+    
+    # ✅ NEW: Clear any existing session data (tapi JANGAN clear database!)
     clear_existing_sessions()
     
     # Development mode check
@@ -82,13 +88,15 @@ def main():
         auth_status = 'DEV_MODE'
         user_data = {'username': 'dev_user', 'nama_lengkap': 'Development User'}
     else:
-        auth_status = 'PENDING'  # Will be handled in login.py
+        auth_status = 'PENDING'
         user_data = {}
     
     # Set environment variables
     os.environ['SIPADU_AUTH_STATUS'] = auth_status
     os.environ['SIPADU_USER_DATA'] = json.dumps(user_data)
     
+    print(f"📊 Auth Status: {auth_status}")
+    print(f"👤 User Data: {user_data}")
     
     # Load and launch the application
     try:
@@ -97,6 +105,8 @@ def main():
         app = App()
         demo = app.make()
         
+        print("✅ Application initialized successfully")
+        print(f"📁 Database: {os.getenv('KH_DATABASE', 'Not set')}")
         
         # Enhanced launch configuration
         launch_kwargs = {
@@ -113,22 +123,56 @@ def main():
             "show_error": True,
         }
         
+        print(f"🌐 Starting server on {launch_kwargs['server_name']}:{launch_kwargs['server_port']}")
         demo.launch(**launch_kwargs)
         
     except Exception as e:
+        print(f"❌ Application failed to start: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
 
+def verify_database_connection():
+    """Verify database connection dan struktur tabel"""
+    try:
+        from ktem.db.engine import engine
+        from sqlalchemy import inspect
+        
+        # Test connection
+        with engine.connect() as conn:
+            print("✅ Database connection successful")
+            
+            # Check tables
+            inspector = inspect(engine)
+            tables = inspector.get_table_names()
+            print(f"📊 Database tables: {tables}")
+            
+            # Check if Source table exists
+            if 'source' in tables:
+                # Count records
+                from sqlalchemy import text
+                result = conn.execute(text("SELECT COUNT(*) FROM source"))
+                count = result.scalar()
+                print(f"📁 Total files in database: {count}")
+            else:
+                print("⚠️ Source table not found in database")
+                
+    except Exception as e:
+        print(f"❌ Database verification failed: {e}")
+        import traceback
+        traceback.print_exc()
+
 def clear_existing_sessions():
+    """Clear HANYA session variables, BUKAN database content"""
+    print("🗑️ Clearing session variables (NOT database)...")
     
     try:
-        # Clear environment session variables
-        for key in ['SIPADU_AUTH_STATUS', 'SIPADU_USER_DATA', 'CURRENT_USER_ID']:
+        # ✅ ONLY clear environment session variables
+        for key in ['SIPADU_AUTH_STATUS', 'SIPADU_USER_DATA', 'CURRENT_USER_ID', 'CURRENT_SESSION_TOKEN']:
             if key in os.environ:
                 del os.environ[key]
         
-        # Clear any temporary session files if they exist
+        # ✅ ONLY clear temporary session files
         import tempfile
         temp_dir = tempfile.gettempdir()
         session_files = [f for f in os.listdir(temp_dir) if f.startswith('kotaemon_session_')]
@@ -138,8 +182,8 @@ def clear_existing_sessions():
                 print(f"🗑️ Removed session file: {session_file}")
             except:
                 pass
-                
-        print("✅ Session clearing completed")
+        
+        print("✅ Session clearing completed (database preserved)")
         
     except Exception as e:
         print(f"❌ Error clearing sessions: {e}")
