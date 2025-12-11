@@ -479,7 +479,7 @@ class SettingsPage(BasePage):
 
     def index_tab(self):
         id2name = {k: v.name for k, v in self._app.index_manager.info().items()}
-        # Ambil hanya satu option (misal, yang pertama)
+        # Render SEMUA index options, bukan hanya satu
         for pn, sig in self._default_settings.index.options.items():
             name = id2name.get(pn, f"<id {pn}>")
             with gr.Tab(name, visible=self._render_index_tab):
@@ -517,7 +517,6 @@ class SettingsPage(BasePage):
                         self._llms.append(obj)
                     if si.special_type == "embedding":
                         self._embeddings.append(obj)
-            break  # hanya render satu tab saja
 
     def reasoning_tab(self):
         with gr.Tab("Reasoning settings", visible=False):
