@@ -101,7 +101,7 @@ class App(BaseApp):
                         "Konfigurasi AI",
                         elem_id="resources-tab",
                         id="resources-tab",
-                        visible=True,  # Hidden until authenticated
+                        visible=False,  # Hidden until authenticated
                         elem_classes=["fill-main-area-height", "scrollable", "hidden-tab-ui"],
                     ) as self._tabs["resources-tab"]:
                         self.resources_page = ResourcesTab(self)

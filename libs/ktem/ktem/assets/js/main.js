@@ -592,8 +592,7 @@ function run() {
     const tabNavButtons = document.querySelectorAll(".tab-nav button");
 
     // List of tab names to hide (Indonesian)
-    // const tabsToHide = ["Bantuan", "Konfigurasi AI"];
-    const tabsToHide = ["Bantuan"];
+    const tabsToHide = ["Bantuan", "Konfigurasi AI"];
 
     tabNavButtons.forEach((button) => {
       const buttonText = button.textContent.trim();
@@ -605,8 +604,7 @@ function run() {
     });
 
     // Also hide by tab IDs
-    // const tabsToHideById = ["#help-tab", "#resources-tab"];
-    const tabsToHideById = ["#help-tab"];
+    const tabsToHideById = ["#help-tab", "#resources-tab"];
     tabsToHideById.forEach((tabId) => {
       const tabButton = document.querySelector(
         `${tabId} .tab-nav button, button[data-testid*="${tabId.slice(1)}"]`
