@@ -418,7 +418,7 @@ if USE_MS_GRAPHRAG:
         "name": "GraphRAG Collection",
         "config": {
             "supported_file_types": (
-                ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pdf, .xls, .xlsx, .doc, .docx, "
                 ".pptx, .csv, .html"
             ),
             "private": True,
@@ -431,7 +431,7 @@ if USE_LIGHTRAG:
         "name": "LightRAG Collection",
         "config": {
             "supported_file_types": (
-                ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pdf, .xls, .xlsx, .doc, .docx, "
                 ".pptx, .csv, .html"
             ),
             "private": True,
@@ -444,7 +444,7 @@ if USE_NANO_GRAPHRAG:
         "name": "NanoGraphRAG Collection",
         "config": {
             "supported_file_types": (
-                ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pdf, .xls, .xlsx, .doc, .docx, "
                 ".pptx, .csv, .html"
             ),
             "private": True,
@@ -463,7 +463,7 @@ KH_INDICES = [
         "name": "Koleksi File",
         "config": {
             "supported_file_types": (
-                ".png, .jpeg, .jpg, .pdf, .xls, .xlsx, .doc, .docx, "
+                ".pdf, .xls, .xlsx, .doc, .docx, "
                 ".pptx, .csv, .html"
             ),
             "private": True,
