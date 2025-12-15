@@ -672,22 +672,10 @@ class FileIndexPage(BasePage):
                 traceback.print_exc()
                 return self._get_empty_file_data()
 
-        # ✅ CRITICAL: SINGLE app.load() registration - NO DUPLICATES!
-        print("📋 Registering app.load() event for file loading...")
-        self._app.app.load(
-            safe_load_all_data_on_startup,
-            inputs=[self._app.user_id],
-            outputs=[
-                self.file_list_state,
-                self.file_list,
-                self.group_list_state,
-                self.group_list,
-                self.group_files
-            ],
-            show_progress="hidden"
-        )
-        
-        print("✅ Successfully registered app.load() event")
+        # ✅ CRITICAL: DISABLE app.load() - file loading now handled by login page!
+        # The login page's complete_login_process() will load files after authentication
+        print("⚠️ SKIPPING app.load() registration - file loading handled by login page")
+        print("✅ File loading will be triggered by login page after authentication")
 
     def file_selected(self, file_id):
         chunks = []

@@ -236,7 +236,7 @@ class LoginPage(BasePage):
             self._trigger_complete_logout()
             return 'FAILED', {}, error_msg, {}
         
-        # ✅ CRITICAL FIX: Check for DIFFERENT user (not same user with new token)
+        # ✅ CRITICAL FIX: Construct new_user_id with sipadu_ prefix (only once!)
         new_user_id = f"sipadu_{user_data.get('user_id')}"
         
         # ✅ NEW LOGIC: Only trigger logout if user ID is DIFFERENT
@@ -564,10 +564,13 @@ class LoginPage(BasePage):
             logger.exception(f"❌ Error clearing cached data: {e}")
 
     def on_register_events(self):
-        """Register events - FINAL FIXED VERSION"""
-        logger.info("Registering events...")
+        """Register events - FINAL FIXED VERSION with proper event flow"""
+        logger.info("="*80)
+        logger.info("🔧 Registering login page events...")
+        logger.info("="*80)
         
-        # ✅ CRITICAL FIX: Auth check dengan immediate file loading
+        # ✅ CRITICAL FIX: Simplified event chain dengan explicit logging
+        # Step 1: Auth check saat app load
         self._app.app.load(
             fn=self.perform_auth_check,
             inputs=[],
@@ -575,6 +578,7 @@ class LoginPage(BasePage):
             show_progress="hidden",
             queue=False
         ).then(
+            # Step 2: Update UI berdasarkan auth status
             fn=self.update_ui_based_on_auth,
             inputs=[self.auth_status, self.user_data, self.auth_error, self.current_user_data],
             outputs=[
@@ -590,20 +594,22 @@ class LoginPage(BasePage):
             show_progress="hidden",
             queue=False
         ).then(
-            # ✅ NEW: Auto-login jika auth SUCCESS (skip manual button click)
+            # Step 3: Auto-login jika auth SUCCESS
             fn=self.auto_login_if_authenticated,
             inputs=[self.auth_status, self.current_user_data],
             outputs=[self._app.user_id],
             show_progress="hidden",
             queue=False
         ).then(
-            # ✅ CRITICAL: Auto-trigger complete_login_process untuk SUCCESS
-            fn=self.auto_complete_login_if_needed,
+            # Step 4: CRITICAL - Complete login process dengan file loading
+            fn=lambda user_id, auth_status: self.auto_complete_login_if_needed(user_id, auth_status),
             inputs=[self._app.user_id, self.auth_status],
             outputs=self._get_all_login_outputs(),
-            show_progress="hidden",
-            queue=False
+            show_progress="full",  # ✅ CRITICAL: Show progress untuk debugging
+            queue=True  # ✅ CRITICAL: Enable queue untuk ensure proper execution
         )
+        
+        logger.info("✅ Registered app.load() event chain")
         
         # Manual login button (untuk Success UI case)
         login_outputs = self._get_all_login_outputs()
@@ -617,8 +623,10 @@ class LoginPage(BasePage):
             fn=self.complete_login_process,
             inputs=[self._app.user_id, self.status_display, gr.State()],
             outputs=login_outputs,
-            show_progress="hidden"
+            show_progress="full"  # ✅ Show progress
         )
+        
+        logger.info("✅ Registered btn_login event")
         
         # Retry button
         self.retry_btn.click(
@@ -645,6 +653,8 @@ class LoginPage(BasePage):
             ],
             show_progress="hidden"
         )
+        
+        logger.info("✅ Registered retry_btn event")
         
         # Dev mode login
         self.btn_dev_login.click(
@@ -673,56 +683,64 @@ class LoginPage(BasePage):
         
         # Add file outputs
         for index in self._app.index_manager.indices:
+            # ✅ CRITICAL FIX: Check both possible attribute names
+            file_control = None
             if hasattr(index, 'file_index_page'):
+                file_control = index.file_index_page
+            elif hasattr(index, 'file_control'):
+                file_control = index.file_control
+            
+            if file_control:
                 login_outputs.extend([
-                    index.file_index_page.file_list_state,
-                    index.file_index_page.file_list,
-                    index.file_index_page.group_list_state,
-                    index.file_index_page.group_list,
-                    index.file_index_page.group_files
+                    file_control.file_list_state,
+                    file_control.file_list,
+                    file_control.group_list_state,
+                    file_control.group_list,
+                    file_control.group_files
                 ])
         
+        logger.info(f"📊 _get_all_login_outputs: {len(login_outputs)} total outputs")
         return login_outputs
 
     def auto_login_if_authenticated(self, auth_status, current_user_data):
-        """Auto create/get user jika authentication SUCCESS - NEW METHOD"""
-        logger.info(f"🔄 auto_login_if_authenticated: status={auth_status}")
+        """Auto create/get user jika authentication SUCCESS - ENHANCED WITH LOGGING"""
+        logger.info("="*80)
+        logger.info(f"🔐 auto_login_if_authenticated: status={auth_status}")
+        logger.info(f"📋 User data: {current_user_data}")
+        logger.info("="*80)
         
         if auth_status == 'SUCCESS' and current_user_data and current_user_data.get('user_id'):
-            logger.info("✅ Auto-creating/getting user for authenticated session")
+            logger.info("✅ Status is SUCCESS and user data available")
+            logger.info(f"🔄 Creating/getting user for: {current_user_data.get('username')}")
             user_id = self.create_or_get_user(current_user_data)
             if user_id:
+                logger.info("="*80)
                 logger.info(f"✅ User ready: {user_id}")
+                logger.info("="*80)
                 return user_id
+            else:
+                logger.error("❌ Failed to create/get user!")
+                return None
         
-        logger.info("❌ Not authenticated or no user data")
+        logger.warning("❌ Not authenticated or no user data")
+        logger.info(f"   - auth_status: {auth_status}")
+        logger.info(f"   - has user_data: {bool(current_user_data)}")
+        logger.info(f"   - has user_id in data: {current_user_data.get('user_id') if current_user_data else 'N/A'}")
         return None
 
     def auto_complete_login_if_needed(self, user_id, auth_status):
-        """Auto complete login process jika user_id ada - NEW METHOD"""
+        """Auto complete login process jika user_id ada - FIXED VERSION"""
         logger.info(f"🔄 auto_complete_login_if_needed: user_id={user_id}, status={auth_status}")
         
-        if user_id and auth_status == 'SUCCESS':
-            logger.info(f"✅ Auto-completing login for user: {user_id}")
-            # ✅ Use existing complete_login_process
+        # ✅ CRITICAL FIX: Check user_id only (auth_status may not be reliable here)
+        if user_id:
+            logger.info(f"✅ Auto-completing login for user: {user_id} (auth_status: {auth_status})")
+            # ✅ Use existing complete_login_process to load everything
             return self.complete_login_process(user_id, "Auto login successful", None)
         
-        logger.info("❌ No auto-login needed")
+        logger.info("❌ No user_id - skipping auto-login")
         # Return empty updates
-        empty_updates = []
-        for _ in self._app._tabs.values():
-            empty_updates.append(gr.update())
-        empty_updates.append(gr.update())  # tabs
-        empty_updates.append(gr.update())  # conversation
-        
-        # Add empty file updates
-        for index in self._app.index_manager.indices:
-            if hasattr(index, 'file_index_page'):
-                empty_updates.extend([
-                    gr.update(), gr.update(), gr.update(), gr.update(), gr.update()
-                ])
-        
-        return empty_updates
+        return self._get_empty_login_outputs()
 
     def dev_login(self, usn, pwd):
         """Development mode login"""
@@ -894,8 +912,9 @@ class LoginPage(BasePage):
         
         # ✅ 1. Set user_id FIRST
         self._app.user_id.value = user_id
-        os.environ['CURRENT_USER_ID'] = f"sipadu_{user_id}"
-        logger.info(f"✅ Set environment CURRENT_USER_ID: sipadu_{user_id}")
+        # ✅ CRITICAL FIX: user_id already contains 'sipadu_' prefix, don't add again!
+        os.environ['CURRENT_USER_ID'] = user_id
+        logger.info(f"✅ Set environment CURRENT_USER_ID: {user_id}")
         
         # ✅ 2. Clear any existing cached data
         self._clear_all_cached_data()
@@ -922,23 +941,41 @@ class LoginPage(BasePage):
             latest_conv_id = None
         
         # ✅ 5. CRITICAL: Force reload files dengan explicit logging
+        logger.info("="*80)
         logger.info("🔄 STARTING FILE RELOAD...")
+        logger.info(f"📊 Number of indices: {len(self._app.index_manager.indices)}")
+        logger.info("="*80)
         file_updates = []
         try:
             for index in self._app.index_manager.indices:
+                logger.info(f"\n🔍 Checking index: {index.id}")
+                logger.info(f"   Index type: {type(index)}")
+                logger.info(f"   Index attributes: {dir(index)}")
+                
+                # ✅ CRITICAL FIX: Check for file_control or file_index_page
+                file_control = None
                 if hasattr(index, 'file_index_page'):
                     file_control = index.file_index_page
+                    logger.info(f"✅ Found file_index_page on index {index.id}")
+                elif hasattr(index, 'file_control'):
+                    file_control = index.file_control
+                    logger.info(f"✅ Found file_control on index {index.id}")
+                
+                if file_control:
                     logger.info(f"🔄 Processing index {index.id} for user {user_id}")
                     
                     # Clear cache
                     if hasattr(file_control, '_clear_cached_file_data'):
                         file_control._clear_cached_file_data()
                         logger.info(f"✅ Cleared cache for index {index.id}")
+                    else:
+                        logger.warning(f"⚠️ No _clear_cached_file_data method for index {index.id}")
                     
                     # Force fresh query
                     logger.info(f"🔍 Calling list_file for user {user_id}...")
                     file_list_state, file_list_df = file_control.list_file(user_id, "")
                     logger.info(f"✅ list_file returned {len(file_list_state)} files")
+                    logger.info(f"📋 Files: {[f['name'] for f in file_list_state[:3]]}...") if file_list_state else logger.info("📋 No files found")
                     
                     logger.info(f"🔍 Calling list_group for user {user_id}...")
                     group_list_state, group_list_df = file_control.list_group(user_id, file_list_state)
@@ -962,7 +999,9 @@ class LoginPage(BasePage):
                     
                     logger.info(f"✅ Prepared {len(file_list_state)} files and {len(group_list_state)} groups for UI update")
                 else:
-                    logger.warning(f"⚠️ No file_index_page for index {index.id}")
+                    logger.error(f"❌ No file_control found for index {index.id}!")
+                    logger.error(f"   This will cause file list to not load!")
+                    logger.error(f"   Index attributes: {[attr for attr in dir(index) if not attr.startswith('_')]}")
                     file_updates.extend([
                         gr.update(value=[]), 
                         gr.update(value=None), 
@@ -982,22 +1021,35 @@ class LoginPage(BasePage):
                     gr.update(choices=[], value=[])
                 ])
         
+        logger.info("="*80)
         logger.info(f"✅ FILE RELOAD COMPLETE - prepared {len(file_updates)} file updates")
+        logger.info("="*80)
         
         # ✅ 6. Prepare all outputs
+        logger.info("\n📦 Preparing final outputs...")
         updates = []
         for k in self._app._tabs.keys():
             if k == "login-tab":
                 updates.append(gr.update(visible=False))
+                logger.info(f"  - Tab '{k}': visible=False")
             else:
                 updates.append(gr.update(visible=True))
+                logger.info(f"  - Tab '{k}': visible=True")
         
         updates.append(gr.update(selected="chat-tab"))
-        updates.append(gr.update(choices=chat_history, value=latest_conv_id))
-        updates.extend(file_updates)
+        logger.info(f"  - Tab selector: selected='chat-tab'")
         
+        updates.append(gr.update(choices=chat_history, value=latest_conv_id))
+        logger.info(f"  - Conversation dropdown: {len(chat_history)} conversations, selected={latest_conv_id}")
+        
+        updates.extend(file_updates)
+        logger.info(f"  - File updates: {len(file_updates)} updates added")
+        
+        logger.info("="*80)
         logger.info(f"🚀 complete_login_process COMPLETE - returning {len(updates)} updates")
         logger.info(f"📊 Updates breakdown: {len(self._app._tabs)} tabs + 1 tab selector + 1 conversation + {len(file_updates)} file updates")
+        logger.info(f"📊 Expected outputs: {len(self._get_all_login_outputs())} vs Actual: {len(updates)}")
+        logger.info("="*80)
         
         return updates
 

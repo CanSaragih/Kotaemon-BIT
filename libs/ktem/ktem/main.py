@@ -79,6 +79,8 @@ class App(BaseApp):
                     ) as self._tabs[f"{index.id}-tab"]:
                         page = index.get_index_page_ui()
                         setattr(self, f"_index_{index.id}", page)
+                        # ✅ CRITICAL FIX: Also assign to index object
+                        index.file_index_page = page
             elif len(self.index_manager.indices) > 1:
                 with gr.Tab(
                     "Koleksi File",
@@ -94,6 +96,8 @@ class App(BaseApp):
                         ) as self._tabs[f"{index.id}-tab"]:
                             page = index.get_index_page_ui()
                             setattr(self, f"_index_{index.id}", page)
+                            # ✅ CRITICAL FIX: Also assign to index object
+                            index.file_index_page = page
 
             if not KH_DEMO_MODE:
                 if not KH_SSO_ENABLED:
@@ -235,7 +239,7 @@ class App(BaseApp):
                     self.chat_page.chat_control.conversation
                 ]
                 
-                # ✅ ENHANCED: Clear all file data dengan force update
+                # ✅ CRITICAL: Return proper number of outputs for empty state
                 file_clear_updates = []
                 for index in self.index_manager.indices:
                     if hasattr(index, 'file_index_page'):
@@ -350,7 +354,7 @@ class App(BaseApp):
             try:
                 # ✅ CRITICAL: Add small delay untuk ensure database is ready
                 import time
-                time.sleep(0.1)  # Very small delay for DB consistency
+                time.sleep(0.2)  # Increase delay slightly for better DB consistency
                 
                 for index in self.index_manager.indices:
                     if hasattr(index, 'file_index_page'):

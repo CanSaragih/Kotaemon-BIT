@@ -312,11 +312,6 @@ function run() {
 
   // ✅ NEW: Perform proper logout dengan session clearing
   function performProperLogout() {
-    console.log("🚪 Starting proper logout process...");
-
-    // Show logout notification
-    showSipaduNotification("Melakukan logout...", "info");
-
     try {
       // ✅ 1. Clear all localStorage
       const keysToRemove = [
@@ -417,7 +412,7 @@ function run() {
   // ✅ ENHANCED: Redirect function with proper URL handling
   function redirectToSipadu() {
     // Get SIPADU URL from .env SIPADI_API_BASE or fallback
-    let sipaduUrl = "http://localhost.sipadubapelitbangbogor/home";
+    let sipaduUrl = "https://ai.bogorkab.go.id/home";
 
     // Priority 1: Window SIPADU_CONFIG from server environment
     if (window.SIPADU_CONFIG && window.SIPADU_CONFIG.HOME_URL) {
@@ -611,7 +606,6 @@ function run() {
       );
       if (tabButton) {
         tabButton.style.display = "none";
-        console.log(`Hidden tab by ID: ${tabId}`);
       }
     });
   }

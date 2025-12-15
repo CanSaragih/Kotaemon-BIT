@@ -220,7 +220,7 @@ if LOCAL_MODEL:
             "model": LOCAL_MODEL,
             "api_key": LOCAL_MODEL_API_KEY or "",
             "timeout": 20,
-            "max_tokens": 4096,
+            "max_tokens": 2048,
         },
         "default": False,
     }
@@ -385,10 +385,9 @@ SETTINGS_REASONING = {
     },
     "top_k": {
         "name": "Jumlah dokumen yang diambil",
-        "value": 30,  # ✅ Naikkan dari 10 ke 30
+        "value": 20, 
         "component": "number",
     },
-    # ✅ TAMBAHAN: Reranking settings
     "use_reranking": {
         "name": "Gunakan Reranking",
         "value": True,
@@ -399,7 +398,6 @@ SETTINGS_REASONING = {
         "value": 10,
         "component": "number",
     },
-    # ✅ TAMBAHAN: Query rewriting
     "use_query_rewriting": {
         "name": "Gunakan Query Rewriting",
         "value": True,
@@ -413,7 +411,6 @@ USE_LIGHTRAG = config("USE_LIGHTRAG", default=False, cast=bool)
 USE_MS_GRAPHRAG = config("USE_MS_GRAPHRAG", default=False, cast=bool)
 
 
-# ✅ CRITICAL FIX: Build GraphRAG indices hanya jika diperlukan
 GRAPHRAG_INDICES = []
 
 if USE_MS_GRAPHRAG:

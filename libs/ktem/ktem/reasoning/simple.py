@@ -492,17 +492,16 @@ class FullQAPipeline(BaseReasoning):
                 "name": "Prompt Sistem",
                 "value": (
                     "Anda adalah asisten ahli perencanaan pembangunan daerah berbasis data. "
-                    "Berikan jawaban yang lengkap, detail, dan berbasis bukti dengan penjelasan yang memadai. "
+                    "Berikan jawaban yang ringkas dan lengkap, dan berbasis bukti dengan penjelasan yang memadai. "
                     "Gunakan bullet points untuk struktur yang jelas. "
-                    "Sertakan contoh konkret dan data relevan jika tersedia. "
                     "Jika tidak tahu jawabannya, jelaskan dengan detail mengapa informasi tidak tersedia."
                 ),
             },
             "qa_prompt": {
                 "name": "Prompt QA (berisi {context}, {question}, {lang})",
                 "value": (
-                    "Berdasarkan konteks berikut, jawab pertanyaan dengan lengkap dan detail. "
-                    "Berikan penjelasan yang komprehensif dengan struktur yang jelas:\n"
+                    "Berdasarkan konteks berikut, jawab pertanyaan dengan lengkap. "
+                    "Berikan penjelasan dengan struktur yang jelas:\n"
                     "Jika informasi tidak lengkap, jelaskan apa yang tersedia dan apa yang masih perlu dicari. "
                     "Berikan jawaban dalam {lang}.\n\n"
                     "{context}\n\n"
