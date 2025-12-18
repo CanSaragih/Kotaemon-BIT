@@ -28,6 +28,7 @@ if not KH_APP_VERSION:
 KH_GRADIO_SHARE = config("KH_GRADIO_SHARE", default=False, cast=bool)
 KH_ENABLE_FIRST_SETUP = config("KH_ENABLE_FIRST_SETUP", default=True, cast=bool)
 KH_DEMO_MODE = config("KH_DEMO_MODE", default=False, cast=bool)
+KH_USE_LOW_LLM_REQUESTS = config("KH_USE_LOW_LLM_REQUESTS", default=True, cast=bool)
 KH_OLLAMA_URL = config("KH_OLLAMA_URL", default="http://localhost:11434/v1/")
 
 # App can be ran from anywhere and it's not trivial to decide where to store app data.
@@ -207,6 +208,8 @@ if VOYAGE_API_KEY:
         "default": False,
     }
 
+# Local Model Configuration for RunPod endpoint
+# Optimized for handling large datasets (30+ columns, 435+ rows)
 LOCAL_MODEL = config("LOCAL_MODEL", default="openai/gpt-oss-20b")
 LOCAL_MODEL_API_BASE = config("LOCAL_MODEL_API_BASE", default="")
 LOCAL_MODEL_API_KEY = config("LOCAL_MODEL_API_KEY", default="")
@@ -215,12 +218,13 @@ if LOCAL_MODEL:
     KH_LLMS["GPT-OSS-20b"] = {
         "spec": {
             "__type__": "kotaemon.llms.ChatOpenAI",
-            "temperature": 0.4,
+            "temperature": 0.4,  # Consistent with OpenAI for deterministic outputs
             "base_url": LOCAL_MODEL_API_BASE or "https://tp9la25qwt7std-8000.proxy.runpod.net/v1",
             "model": LOCAL_MODEL,
             "api_key": LOCAL_MODEL_API_KEY or "",
-            "timeout": 20,
-            "max_tokens": 2048,
+            "timeout": 180,  # Increased from 60s to handle large context
+            "max_tokens": 8192,  # Increased from 2048 for comprehensive responses
+            "max_retries": 3,  # Retry logic for unstable RunPod connections
         },
         "default": False,
     }
@@ -229,7 +233,7 @@ if LOCAL_MODEL:
             "__type__": "kotaemon.llms.LCOllamaChat",
             "base_url": KH_OLLAMA_URL.replace("v1/", ""),
             "model": config("LOCAL_MODEL", default="qwen2.5:3b"),
-            "num_ctx": 8192,
+            "num_ctx": 32768,
         },
         "default": False,
     }
@@ -380,12 +384,12 @@ SETTINGS_REASONING = {
     },
     "max_context_length": {
         "name": "Panjang konteks maksimal (LLM)",
-        "value": 16000,
+        "value": 32000,
         "component": "number",
     },
     "top_k": {
         "name": "Jumlah dokumen yang diambil",
-        "value": 20, 
+        "value": 30, 
         "component": "number",
     },
     "use_reranking": {
@@ -395,7 +399,7 @@ SETTINGS_REASONING = {
     },
     "rerank_top_k": {
         "name": "Jumlah dokumen setelah reranking",
-        "value": 10,
+        "value": 15,
         "component": "number",
     },
     "use_query_rewriting": {
