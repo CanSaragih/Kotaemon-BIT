@@ -124,38 +124,38 @@ KH_EMBEDDINGS = {}
 KH_RERANKINGS = {}
 
 # populate options from config
-if config("AZURE_OPENAI_API_KEY", default="") and config(
-    "AZURE_OPENAI_ENDPOINT", default=""
-):
-    if config("AZURE_OPENAI_CHAT_DEPLOYMENT", default=""):
-        KH_LLMS["azure"] = {
-            "spec": {
-                "__type__": "kotaemon.llms.AzureChatOpenAI",
-                "temperature": 0,
-                "azure_endpoint": config("AZURE_OPENAI_ENDPOINT", default=""),
-                "api_key": config("AZURE_OPENAI_API_KEY", default=""),
-                "api_version": config("OPENAI_API_VERSION", default="")
-                or "2024-02-15-preview",
-                "azure_deployment": config("AZURE_OPENAI_CHAT_DEPLOYMENT", default=""),
-                "timeout": 20,
-            },
-            "default": False,
-        }
-    if config("AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT", default=""):
-        KH_EMBEDDINGS["azure"] = {
-            "spec": {
-                "__type__": "kotaemon.embeddings.AzureOpenAIEmbeddings",
-                "azure_endpoint": config("AZURE_OPENAI_ENDPOINT", default=""),
-                "api_key": config("AZURE_OPENAI_API_KEY", default=""),
-                "api_version": config("OPENAI_API_VERSION", default="")
-                or "2024-02-15-preview",
-                "azure_deployment": config(
-                    "AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT", default=""
-                ),
-                "timeout": 10,
-            },
-            "default": False,
-        }
+# if config("AZURE_OPENAI_API_KEY", default="") and config(
+#     "AZURE_OPENAI_ENDPOINT", default=""
+# ):
+#     if config("AZURE_OPENAI_CHAT_DEPLOYMENT", default=""):
+#         KH_LLMS["azure"] = {
+#             "spec": {
+#                 "__type__": "kotaemon.llms.AzureChatOpenAI",
+#                 "temperature": 0,
+#                 "azure_endpoint": config("AZURE_OPENAI_ENDPOINT", default=""),
+#                 "api_key": config("AZURE_OPENAI_API_KEY", default=""),
+#                 "api_version": config("OPENAI_API_VERSION", default="")
+#                 or "2024-02-15-preview",
+#                 "azure_deployment": config("AZURE_OPENAI_CHAT_DEPLOYMENT", default=""),
+#                 "timeout": 20,
+#             },
+#             "default": False,
+#         }
+#     if config("AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT", default=""):
+#         KH_EMBEDDINGS["azure"] = {
+#             "spec": {
+#                 "__type__": "kotaemon.embeddings.AzureOpenAIEmbeddings",
+#                 "azure_endpoint": config("AZURE_OPENAI_ENDPOINT", default=""),
+#                 "api_key": config("AZURE_OPENAI_API_KEY", default=""),
+#                 "api_version": config("OPENAI_API_VERSION", default="")
+#                 or "2024-02-15-preview",
+#                 "azure_deployment": config(
+#                     "AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT", default=""
+#                 ),
+#                 "timeout": 10,
+#             },
+#             "default": False,
+#         }
 
 OPENAI_DEFAULT = "<YOUR_OPENAI_KEY>"
 OPENAI_API_KEY = config("OPENAI_API_KEY", default=OPENAI_DEFAULT)
@@ -189,24 +189,24 @@ if OPENAI_API_KEY:
         "default": IS_OPENAI_DEFAULT,
     }
 
-VOYAGE_API_KEY = config("VOYAGE_API_KEY", default="")
-if VOYAGE_API_KEY:
-    KH_EMBEDDINGS["voyageai"] = {
-        "spec": {
-            "__type__": "kotaemon.embeddings.VoyageAIEmbeddings",
-            "api_key": VOYAGE_API_KEY,
-            "model": config("VOYAGE_EMBEDDINGS_MODEL", default="voyage-3-large"),
-        },
-        "default": False,
-    }
-    KH_RERANKINGS["voyageai"] = {
-        "spec": {
-            "__type__": "kotaemon.rerankings.VoyageAIReranking",
-            "model_name": "rerank-2",
-            "api_key": VOYAGE_API_KEY,
-        },
-        "default": False,
-    }
+# VOYAGE_API_KEY = config("VOYAGE_API_KEY", default="")
+# if VOYAGE_API_KEY:
+#     KH_EMBEDDINGS["voyageai"] = {
+#         "spec": {
+#             "__type__": "kotaemon.embeddings.VoyageAIEmbeddings",
+#             "api_key": VOYAGE_API_KEY,
+#             "model": config("VOYAGE_EMBEDDINGS_MODEL", default="voyage-3-large"),
+#         },
+#         "default": False,
+#     }
+#     KH_RERANKINGS["voyageai"] = {
+#         "spec": {
+#             "__type__": "kotaemon.rerankings.VoyageAIReranking",
+#             "model_name": "rerank-2",
+#             "api_key": VOYAGE_API_KEY,
+#         },
+#         "default": False,
+#     }
 
 # Local Model Configuration for RunPod endpoint
 # Optimized for handling large datasets (30+ columns, 435+ rows)
@@ -228,15 +228,15 @@ if LOCAL_MODEL:
         },
         "default": False,
     }
-    KH_LLMS["ollama-long-context"] = {
-        "spec": {
-            "__type__": "kotaemon.llms.LCOllamaChat",
-            "base_url": KH_OLLAMA_URL.replace("v1/", ""),
-            "model": config("LOCAL_MODEL", default="qwen2.5:3b"),
-            "num_ctx": 32768,
-        },
-        "default": False,
-    }
+    # KH_LLMS["ollama-long-context"] = {
+    #     "spec": {
+    #         "__type__": "kotaemon.llms.LCOllamaChat",
+    #         "base_url": KH_OLLAMA_URL.replace("v1/", ""),
+    #         "model": config("LOCAL_MODEL", default="qwen2.5:3b"),
+    #         "num_ctx": 32768,
+    #     },
+    #     "default": False,
+    # }
 
     KH_EMBEDDINGS["ollama"] = {
         "spec": {
@@ -255,65 +255,65 @@ if LOCAL_MODEL:
         "default": False,
     }
 
-HF_TOKEN = config("HF_TOKEN", default="")
-HF_MODEL = config("HF_MODEL", default="openai/gpt-oss-120b:novita")
-HF_EMBEDDING_MODEL = config("HF_EMBEDDING_MODEL", default="BAAI/bge-m3")
+# HF_TOKEN = config("HF_TOKEN", default="")
+# HF_MODEL = config("HF_MODEL", default="openai/gpt-oss-120b:novita")
+# HF_EMBEDDING_MODEL = config("HF_EMBEDDING_MODEL", default="BAAI/bge-m3")
 
-if HF_TOKEN:
-    KH_LLMS["huggingface"] = {
-        "spec": {
-            "__type__": "kotaemon.llms.ChatOpenAI",
-            "base_url": "https://router.huggingface.co/v1",
-            "model": HF_MODEL,
-            "api_key": HF_TOKEN,
-            "timeout": 60,
-        },
-        "default": False,
-    }
+# if HF_TOKEN:
+#     KH_LLMS["huggingface"] = {
+#         "spec": {
+#             "__type__": "kotaemon.llms.ChatOpenAI",
+#             "base_url": "https://router.huggingface.co/v1",
+#             "model": HF_MODEL,
+#             "api_key": HF_TOKEN,
+#             "timeout": 60,
+#         },
+#         "default": False,
+#     }
 
-# additional LLM configurations
-KH_LLMS["claude"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.chats.LCAnthropicChat",
-        "model_name": "claude-3-5-sonnet-20240620",
-        "api_key": "your-key",
-    },
-    "default": False,
-}
-KH_LLMS["google"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.chats.LCGeminiChat",
-        "model_name": "gemini-2.0-flash",
-        "api_key": GOOGLE_API_KEY,
-    },
-    "default": not IS_OPENAI_DEFAULT,
-}
-KH_LLMS["groq"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.ChatOpenAI",
-        "base_url": "https://api.groq.com/openai/v1",
-        "model": "llama-3.1-8b-instant",
-        "api_key": "your-key",
-    },
-    "default": False,
-}
-KH_LLMS["cohere"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.chats.LCCohereChat",
-        "model_name": "command-r-plus-08-2024",
-        "api_key": config("COHERE_API_KEY", default="your-key"),
-    },
-    "default": False,
-}
-KH_LLMS["mistral"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.ChatOpenAI",
-        "base_url": "https://api.mistral.ai/v1",
-        "model": "ministral-8b-latest",
-        "api_key": config("MISTRAL_API_KEY", default="your-key"),
-    },
-    "default": False,
-}
+# # additional LLM configurations
+# KH_LLMS["claude"] = {
+#     "spec": {
+#         "__type__": "kotaemon.llms.chats.LCAnthropicChat",
+#         "model_name": "claude-3-5-sonnet-20240620",
+#         "api_key": "your-key",
+#     },
+#     "default": False,
+# }
+# KH_LLMS["google"] = {
+#     "spec": {
+#         "__type__": "kotaemon.llms.chats.LCGeminiChat",
+#         "model_name": "gemini-2.0-flash",
+#         "api_key": GOOGLE_API_KEY,
+#     },
+#     "default": not IS_OPENAI_DEFAULT,
+# }
+# KH_LLMS["groq"] = {
+#     "spec": {
+#         "__type__": "kotaemon.llms.ChatOpenAI",
+#         "base_url": "https://api.groq.com/openai/v1",
+#         "model": "llama-3.1-8b-instant",
+#         "api_key": "your-key",
+#     },
+#     "default": False,
+# }
+# KH_LLMS["cohere"] = {
+#     "spec": {
+#         "__type__": "kotaemon.llms.chats.LCCohereChat",
+#         "model_name": "command-r-plus-08-2024",
+#         "api_key": config("COHERE_API_KEY", default="your-key"),
+#     },
+#     "default": False,
+# }
+# KH_LLMS["mistral"] = {
+#     "spec": {
+#         "__type__": "kotaemon.llms.ChatOpenAI",
+#         "base_url": "https://api.mistral.ai/v1",
+#         "model": "ministral-8b-latest",
+#         "api_key": config("MISTRAL_API_KEY", default="your-key"),
+#     },
+#     "default": False,
+# }
 
 # additional embeddings configurations
 KH_EMBEDDINGS["cohere"] = {
